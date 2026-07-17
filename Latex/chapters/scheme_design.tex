@@ -1,53 +1,75 @@
 \chapter{Scheme Design Document}
 \label{ch:scheme-design}
 
-\noindent\textbf{Novel ECC-Based Security Schemes for E-Banking Systems}\par
+\noindent\textit{Novel ECC-Based Security Schemes for E-Banking Systems}\par\vspace{1em}
 
-\section{1. Overview}\indent This document specifies two original cryptographic schemes proposed in this dissertation: (A) ECC-DTB-AKA --- Device- and Transaction-Bound Authenticated Key Agreement for client-server e-banking communication, and (B) ECC-HISE --- Hierarchical Integrity-preserving Secure Envelope for server-server inter-bank data exchange. Both schemes employ elliptic curve cryptography (ECC) as the foundational primitive, selected for its superior security-per-bit ratio compared to RSA and its widespread adoption in modern financial infrastructure standards including EMV, FIDO2, and TLS 1.3.
+\section{1. Overview}
+
+\indent This document specifies two original cryptographic schemes proposed in this dissertation: (A) ECC-DTB-AKA --- Device- and Transaction-Bound Authenticated Key Agreement for client-server e-banking communication, and (B) ECC-HISE --- Hierarchical Integrity-preserving Secure Envelope for server-server inter-bank data exchange. Both schemes employ elliptic curve cryptography (ECC) as the foundational primitive, selected for its superior security-per-bit ratio compared to RSA and its widespread adoption in modern financial infrastructure standards including EMV, FIDO2, and TLS 1.3 \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}\hyperref[ref:7]{[7]}.
 
 \indent The schemes are designed to address distinct vulnerability classes identified in Chapter 1: ECC-DTB-AKA targets authentication and session-key establishment weaknesses in client-server channels (Section 1.2), while ECC-HISE targets data confidentiality, integrity, and auditability weaknesses in server-server settlement and record-transfer channels (Section 1.3).
 
-\section{2. Scheme A: ECC-DTB-AKA}\indent ECC-DTB-AKA establishes a mutually authenticated session key between a banking client C and banking server S, with the session key further bound to a device fingerprint and a transaction nonce to enable per-transaction key derivation without additional round trips.
+\section{2. Scheme A: ECC-DTB-AKA}
 
-\subsection{Notation}\indent Let E be an elliptic curve over a finite field with base point G of prime order q. Let H denote SHA-256, and HKDF denote RFC 5869 key derivation. Denote scalar multiplication as [k]G. Entities: Client C with long-term key pair (sk\textbackslash\{\}textsubscript\{C\}, PK\textbackslash\{\}textsubscript\{C\} = [sk\textbackslash\{\}textsubscript\{C\}]G); Server S with certificate chain rooted in bank CA; device\textbackslash\{\}textsubscript\{fp\} = H(hardware\textbackslash\{\}textsubscript\{attributes\}) truncated to 128 bits; ephemeral pairs (ek\textbackslash\{\}textsubscript\{C\}, EK\textbackslash\{\}textsubscript\{C\}) and (ek\textbackslash\{\}textsubscript\{S\}, EK\textbackslash\{\}textsubscript\{S\}) generated per session.
+\indent ECC-DTB-AKA establishes a mutually authenticated session key between a banking client C and banking server S, with the session key further bound to a device fingerprint and a transaction nonce to enable per-transaction key derivation without additional round trips.
 
-\subsection{Protocol Steps (3-Round Handshake)}\indent Round 1 (Client Init): C generates ephemeral (ek\textbackslash\{\}textsubscript\{C\}, EK\textbackslash\{\}textsubscript\{C\}), samples nonce\textbackslash\{\}textsubscript\{c\} ← \{0,1\}\textasciicircum{}128, computes t\textbackslash\{\}textsubscript\{C\} = H(EK\textbackslash\{\}textsubscript\{C\} || PK\textbackslash\{\}textsubscript\{C\} || device\textbackslash\{\}textsubscript\{fp\} || nonce\textbackslash\{\}textsubscript\{c\}), and sends MSG1 = (EK\textbackslash\{\}textsubscript\{C\}, PK\textbackslash\{\}textsubscript\{C\}, device\textbackslash\{\}textsubscript\{fp\}, nonce\textbackslash\{\}textsubscript\{c\}, Sig\textbackslash\{\}textsubscript\{C\}(sk\textbackslash\{\}textsubscript\{C\}, t\textbackslash\{\}textsubscript\{C\})).
+\subsection{Notation}
 
-\indent Round 2 (Server Response): S verifies Sig\textbackslash\{\}textsubscript\{C\} and PK\textbackslash\{\}textsubscript\{C\} against customer registry. S generates (ek\textbackslash\{\}textsubscript\{S\}, EK\textbackslash\{\}textsubscript\{S\}), samples nonce\textbackslash\{\}textsubscript\{s\}, computes Z = [ek\textbackslash\{\}textsubscript\{S\}]EK\textbackslash\{\}textsubscript\{C\} = [ek\textbackslash\{\}textsubscript\{C\}]EK\textbackslash\{\}textsubscript\{S\}, MSK = HKDF(Z || device\textbackslash\{\}textsubscript\{fp\} || nonce\textbackslash\{\}textsubscript\{c\} || nonce\textbackslash\{\}textsubscript\{s\} || 'ECC-DTB-AKA-v1', 256), and sends MSG2 = (EK\textbackslash\{\}textsubscript\{S\}, nonce\textbackslash\{\}textsubscript\{s\}, Cert\textbackslash\{\}textsubscript\{S\}, Sig\textbackslash\{\}textsubscript\{S\}(sk\textbackslash\{\}textsubscript\{S\}, H(EK\textbackslash\{\}textsubscript\{S\} || nonce\textbackslash\{\}textsubscript\{s\} || MSK))).
+\indent Let E be an elliptic curve over a finite field with base point G of prime order q. Let H denote SHA-256, and HKDF denote RFC 5869 key derivation. Denote scalar multiplication as [k]G. Entities: Client C with long-term key pair (sk\textsubscript{C}, PK\textsubscript{C} = [sk\textsubscript{C}]G); Server S with certificate chain rooted in bank CA; device\textsubscript{fp} = H(hardware\textsubscript{attributes}) truncated to 128 bits; ephemeral pairs (ek\textsubscript{C}, EK\textsubscript{C}) and (ek\textsubscript{S}, EK\textsubscript{S}) generated per session \hyperref[ref:4]{[4]}\hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}.
 
-\indent Round 3 (Client Confirm): C verifies Cert\textbackslash\{\}textsubscript\{S\} and Sig\textbackslash\{\}textsubscript\{S\}, recomputes MSK, derives TBK\textbackslash\{\}textsubscript\{txn\} = HKDF(MSK || txn\textbackslash\{\}textsubscript\{nonce\} || 'TBK', 256) for a specific transaction, and sends MSG3 = (HMAC(TBK\textbackslash\{\}textsubscript\{txn\}, txn\textbackslash\{\}textsubscript\{nonce\}), Sig\textbackslash\{\}textsubscript\{C\}(sk\textbackslash\{\}textsubscript\{C\}, H(MSK || 'confirm'))).
+\subsection{Protocol Steps (3-Round Handshake)}
 
-\indent Upon successful verification, both parties hold MSK (master session key) and can derive transaction-bound keys TBK\textbackslash\{\}textsubscript\{txn\} on demand.
+\indent Round 1 (Client Init): C generates ephemeral (ek\textsubscript{C}, EK\textsubscript{C}), samples nonce\textsubscript{c} $<<<PH3>>>$ \{0,1\}\textasciicircum{}128, computes t\textsubscript{C} = H(EK\textsubscript{C} || PK\textsubscript{C} || device\textsubscript{fp} || nonce\textsubscript{c}), and sends MSG1 = (EK\textsubscript{C}, PK\textsubscript{C}, device\textsubscript{fp}, nonce\textsubscript{c}, Sig\textsubscript{C}(sk\textsubscript{C}, t\textsubscript{C})).
 
-\subsection{Security Properties}\indent Authenticity: Mutual authentication via ECDSA signatures and server certificate validation.
+\indent Round 2 (Server Response): S verifies Sig\textsubscript{C} and PK\textsubscript{C} against customer registry. S generates (ek\textsubscript{S}, EK\textsubscript{S}), samples nonce\textsubscript{s}, computes Z = [ek\textsubscript{S}]EK\textsubscript{C} = [ek\textsubscript{C}]EK\textsubscript{S}, MSK = HKDF(Z || device\textsubscript{fp} || nonce\textsubscript{c} || nonce\textsubscript{s} || 'ECC-DTB-AKA-v1', 256), and sends MSG2 = (EK\textsubscript{S}, nonce\textsubscript{s}, Cert\textsubscript{S}, Sig\textsubscript{S}(sk\textsubscript{S}, H(EK\textsubscript{S} || nonce\textsubscript{s} || MSK))) \hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}.
 
-\indent Forward secrecy: Compromise of long-term keys does not reveal past MSK values due to ECDH ephemerals.
+\indent Round 3 (Client Confirm): C verifies Cert\textsubscript{S} and Sig\textsubscript{S}, recomputes MSK, derives TBK\textsubscript{txn} = HKDF(MSK || txn\textsubscript{nonce} || 'TBK', 256) for a specific transaction, and sends MSG3 = (HMAC(TBK\textsubscript{txn}, txn\textsubscript{nonce}), Sig\textsubscript{C}(sk\textsubscript{C}, H(MSK || 'confirm'))) \hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}.
 
-\indent Device binding: device\textbackslash\{\}textsubscript\{fp\} included in HKDF salt prevents session transfer to unauthorized devices.
+\indent Upon successful verification, both parties hold MSK (master session key) and can derive transaction-bound keys TBK\textsubscript{txn} on demand.
 
-\indent Transaction binding: TBK\textbackslash\{\}textsubscript\{txn\} incorporates txn\textbackslash\{\}textsubscript\{nonce\}, limiting replay to single transaction context.
+\subsection{Security Properties}
 
-\indent Resistance: Replay (nonces + timestamps), MITM (signatures + cert chain), session hijacking (device\textbackslash\{\}textsubscript\{fp\} binding).
+\indent Authenticity: Mutual authentication via ECDSA signatures and server certificate validation \hyperref[ref:4]{[4]}\hyperref[ref:9]{[9]}\hyperref[ref:26]{[26]}.
 
-\section{3. Scheme B: ECC-HISE}\indent ECC-HISE provides encrypted, signed, and auditable envelopes for batch financial records transferred between server nodes in an inter-bank or intra-bank settlement network.
+\indent Forward secrecy: Compromise of long-term keys does not reveal past MSK values due to ECDH ephemerals \hyperref[ref:12]{[12]}\hyperref[ref:29]{[29]}\hyperref[ref:1]{[1]}.
 
-\subsection{Key Hierarchy}\indent Level 0 --- Master Key (MK): Stored in HSM at clearing-house authority; MK ∈ Z\textbackslash\{\}textsubscript\{q\}.
+\indent Device binding: device\textsubscript{fp} included in HKDF salt prevents session transfer to unauthorized devices \hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}.
 
-\indent Level 1 --- Domain Keys: DK\textbackslash\{\}textsubscript\{i\} = HKDF([MK]G || domain\textbackslash\{\}textsubscript\{id\} || 'DK', 256) for each business domain (retail, corporate, settlement).
+\indent Transaction binding: TBK\textsubscript{txn} incorporates txn\textsubscript{nonce}, limiting replay to single transaction context.
 
-\indent Level 2 --- Session Keys: SK\textbackslash\{\}textsubscript\{batch\} = HKDF(DK\textbackslash\{\}textsubscript\{i\} || batch\textbackslash\{\}textsubscript\{id\} || epoch || 'SK', 256) rotated per batch.
+\indent Resistance: Replay (nonces + timestamps), MITM (signatures + cert chain), session hijacking (device\textsubscript{fp} binding).
 
-\subsection{Envelope Construction}\indent For each record r\textbackslash\{\}textsubscript\{j\} in batch B = \{r\textbackslash\{\}textsubscript\{1\}, ..., r\textbackslash\{\}textsubscript\{n\}\}: (1) Generate ephemeral eph\textbackslash\{\}textsubscript\{j\}; compute shared Z\textbackslash\{\}textsubscript\{j\} via ECDH(eph\textbackslash\{\}textsubscript\{j\}, PK\textbackslash\{\}textsubscript\{receiver\}). (2) Derive K\textbackslash\{\}textsubscript\{enc\} = HKDF(Z\textbackslash\{\}textsubscript\{j\} || SK\textbackslash\{\}textsubscript\{batch\}, 256); split into K\textbackslash\{\}textsubscript\{aes\} (128-bit) and K\textbackslash\{\}textsubscript\{mac\} (128-bit). (3) ciphertext\textbackslash\{\}textsubscript\{j\} = AES-256-GCM(K\textbackslash\{\}textsubscript\{aes\}, IV\textbackslash\{\}textsubscript\{j\}, r\textbackslash\{\}textsubscript\{j\}). (4) sig\textbackslash\{\}textsubscript\{j\} = Ed25519(sk\textbackslash\{\}textsubscript\{sender\}, H(ciphertext\textbackslash\{\}textsubscript\{j\} || batch\textbackslash\{\}textsubscript\{id\} || j)). (5) leaf\textbackslash\{\}textsubscript\{j\} = H(ciphertext\textbackslash\{\}textsubscript\{j\} || sig\textbackslash\{\}textsubscript\{j\} || metadata\textbackslash\{\}textsubscript\{j\}). Merkle root Root = Merkle(leaf\textbackslash\{\}textsubscript\{1\}, ..., leaf\textbackslash\{\}textsubscript\{n\}) is included in batch header. Header = (batch\textbackslash\{\}textsubscript\{id\}, epoch, PK\textbackslash\{\}textsubscript\{eph\}, Root, Sig\textbackslash\{\}textsubscript\{header\}, timestamp).
+\section{3. Scheme B: ECC-HISE}
 
-\subsection{Verification and Audit}\indent Receiver verifies Sig\textbackslash\{\}textsubscript\{header\}, reconstructs Merkle root from received records, decrypts each record, and validates sig\textbackslash\{\}textsubscript\{j\}. Any tampering breaks Merkle root or GCM authentication tag. Audit log stores (batch\textbackslash\{\}textsubscript\{id\}, Root, timestamp) immutably for regulatory compliance.
+\indent ECC-HISE provides encrypted, signed, and auditable envelopes for batch financial records transferred between server nodes in an inter-bank or intra-bank settlement network.
 
-\section{4. Comparison Baselines}\indent ECC-DTB-AKA will be compared against: TLS 1.3 full handshake + application-layer OTP; standard ECDH without device/transaction binding; OAuth 2.0 PKCE flow.
+\subsection{Key Hierarchy}
 
-\indent ECC-HISE will be compared against: TLS record layer only; AES-GCM with static pre-shared keys; standard ECIES without hierarchical keys or Merkle audit chain.
+\indent Level 0 --- Master Key (MK): Stored in HSM at clearing-house authority; MK $<<<PH0>>>$ Z\textsubscript{q}.
+
+\indent Level 1 --- Domain Keys: DK\textsubscript{i} = HKDF([MK]G || domain\textsubscript{id} || 'DK', 256) for each business domain (retail, corporate, settlement) \hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}.
+
+\indent Level 2 --- Session Keys: SK\textsubscript{batch} = HKDF(DK\textsubscript{i} || batch\textsubscript{id} || epoch || 'SK', 256) rotated per batch \hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}.
+
+\subsection{Envelope Construction}
+
+\indent For each record r\textsubscript{j} in batch B = \{r\textsubscript{1}, ..., r\textsubscript{n}\}: (1) Generate ephemeral eph\textsubscript{j}; compute shared Z\textsubscript{j} via ECDH(eph\textsubscript{j}, PK\textsubscript{receiver}). (2) Derive K\textsubscript{enc} = HKDF(Z\textsubscript{j} || SK\textsubscript{batch}, 256); split into K\textsubscript{aes} (128-bit) and K\textsubscript{mac} (128-bit). (3) ciphertext\textsubscript{j} = AES-256-GCM(K\textsubscript{aes}, IV\textsubscript{j}, r\textsubscript{j}). (4) sig\textsubscript{j} = Ed25519(sk\textsubscript{sender}, H(ciphertext\textsubscript{j} || batch\textsubscript{id} || j)). (5) leaf\textsubscript{j} = H(ciphertext\textsubscript{j} || sig\textsubscript{j} || metadata\textsubscript{j}). Merkle root Root = Merkle(leaf\textsubscript{1}, ..., leaf\textsubscript{n}) is included in batch header. Header = (batch\textsubscript{id}, epoch, PK\textsubscript{eph}, Root, Sig\textsubscript{header}, timestamp) \hyperref[ref:2]{[2]}\hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}.
+
+\subsection{Verification and Audit}
+
+\indent Receiver verifies Sig\textsubscript{header}, reconstructs Merkle root from received records, decrypts each record, and validates sig\textsubscript{j}. Any tampering breaks Merkle root or GCM authentication tag. Audit log stores (batch\textsubscript{id}, Root, timestamp) immutably for regulatory compliance \hyperref[ref:30]{[30]}.
+
+\section{4. Comparison Baselines}
+
+\indent ECC-DTB-AKA will be compared against: TLS 1.3 full handshake + application-layer OTP; standard ECDH without device/transaction binding; OAuth 2.0 PKCE flow \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}\hyperref[ref:12]{[12]}.
+
+\indent ECC-HISE will be compared against: TLS record layer only; AES-GCM with static pre-shared keys; standard ECIES without hierarchical keys or Merkle audit chain \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}\hyperref[ref:2]{[2]}.
 
 \indent Metrics: authentication latency (ms), ciphertext overhead (bytes), round-trip count, and qualitative attack-resistance matrix.
 
-\section{5. Implementation Mapping}\indent Prototype modules: prototype/ecc\textbackslash\{\}textsubscript\{dtb\}_aka/ (client, server, protocol), prototype/ecc\textbackslash\{\}textsubscript\{hise\}/ (envelope, merkle, hierarchy), prototype/benchmarks/ (timing and size measurements).
+\section{5. Implementation Mapping}
 
-\indent Cryptographic library: Python cryptography (OpenSSL backend), curves: SECP256R1 and Ed25519.
+\indent Prototype modules: prototype/ecc\textsubscript{dtb}\_aka/ (client, server, protocol), prototype/ecc\textsubscript{hise}/ (envelope, merkle, hierarchy), prototype/benchmarks/ (timing and size measurements) \hyperref[ref:30]{[30]}.
+
+\indent Cryptographic library: Python cryptography (OpenSSL backend), curves: SECP256R1 and Ed25519 \hyperref[ref:10]{[10]}.
 

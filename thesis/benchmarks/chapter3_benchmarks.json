@@ -1,0 +1,92 @@
+[
+  {
+    "scheme": "ECC-HISE",
+    "records": 10,
+    "latency_ms_mean": 1.86,
+    "latency_ms_stdev": 0.29,
+    "batch_bytes_mean": 3882,
+    "merkle_audit": true,
+    "hierarchical_keys": true,
+    "per_record_signatures": true
+  },
+  {
+    "scheme": "Static AES-GCM PSK",
+    "records": 10,
+    "latency_ms_mean": 0.02,
+    "latency_ms_stdev": 0.0,
+    "batch_bytes_mean": 2840,
+    "merkle_audit": false,
+    "hierarchical_keys": false,
+    "per_record_signatures": false
+  },
+  {
+    "scheme": "TLS record layer only",
+    "records": 10,
+    "latency_ms_mean": 0.03,
+    "latency_ms_stdev": 0.0,
+    "batch_bytes_mean": 2895,
+    "merkle_audit": false,
+    "hierarchical_keys": false,
+    "per_record_signatures": false
+  },
+  {
+    "scheme": "ECC-HISE",
+    "records": 100,
+    "latency_ms_mean": 23.32,
+    "latency_ms_stdev": 1.71,
+    "batch_bytes_mean": 37823,
+    "merkle_audit": true,
+    "hierarchical_keys": true,
+    "per_record_signatures": true
+  },
+  {
+    "scheme": "Static AES-GCM PSK",
+    "records": 100,
+    "latency_ms_mean": 0.22,
+    "latency_ms_stdev": 0.02,
+    "batch_bytes_mean": 28400,
+    "merkle_audit": false,
+    "hierarchical_keys": false,
+    "per_record_signatures": false
+  },
+  {
+    "scheme": "TLS record layer only",
+    "records": 100,
+    "latency_ms_mean": 0.24,
+    "latency_ms_stdev": 0.03,
+    "batch_bytes_mean": 28905,
+    "merkle_audit": false,
+    "hierarchical_keys": false,
+    "per_record_signatures": false
+  },
+  {
+    "scheme": "ECC-HISE",
+    "records": 500,
+    "latency_ms_mean": 245.53,
+    "latency_ms_stdev": 8.54,
+    "batch_bytes_mean": 189023,
+    "merkle_audit": true,
+    "hierarchical_keys": true,
+    "per_record_signatures": true
+  },
+  {
+    "scheme": "Static AES-GCM PSK",
+    "records": 500,
+    "latency_ms_mean": 1.08,
+    "latency_ms_stdev": 0.09,
+    "batch_bytes_mean": 142000,
+    "merkle_audit": false,
+    "hierarchical_keys": false,
+    "per_record_signatures": false
+  },
+  {
+    "scheme": "TLS record layer only",
+    "records": 500,
+    "latency_ms_mean": 1.09,
+    "latency_ms_stdev": 0.09,
+    "batch_bytes_mean": 144505,
+    "merkle_audit": false,
+    "hierarchical_keys": false,
+    "per_record_signatures": false
+  }
+]

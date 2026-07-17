@@ -1,0 +1,241 @@
+\chapter{Evaluation and Prior Work}
+\label{ch:chapter05}
+
+\noindent\textit{Evaluation, Prior Work Analysis, and Vulnerability Synthesis}\par\vspace{1em}
+
+\section{Effectiveness of Proposed Methods Against Network Attacks}
+
+\indent This section evaluates the effectiveness of ECC-DTB-AKA and ECC-HISE against the attack mechanisms cataloged in Chapter 1 (Section 1.1), using both qualitative security analysis from Chapters 2 and 3 and quantitative measurements from the prototype implementation in Chapter 4.
+
+\subsection{Attack Resistance Matrix}
+
+\indent Table 5.1 consolidates resistance ratings for both proposed schemes against the six primary attack categories defined in Section 1.1.1. Ratings reflect cryptographic analysis, prototype test results, and comparison with baseline schemes that lack device binding, transaction binding, or Merkle audit capabilities \hyperref[ref:30]{[30]}.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{llll}
+\toprule
+Attack category & ECC-DTB-AKA & ECC-HISE & Baseline (TLS/PSK) \\
+\midrule
+MITM / impersonation & High & High (sig chain) & Medium (server-only) \\
+Replay & High (nonces) & High (Merkle+nonce) & Medium \\
+Session hijacking & High (device\textsubscript{fp}) & N/A (server-server) & Low (bearer token) \\
+Credential stuffing & N/A (PKI-based) & N/A & Low (password) \\
+Data tampering & Medium (HMAC txn) & High (GCM+sig+Merkle) & Low (TLS only) \\
+Insider / audit evasion & Medium & High (Merkle audit) & Low \\
+\bottomrule
+\end{tabular}
+\caption{Table 5.1: Attack resistance matrix for proposed schemes vs. baselines.}\label{tbl:5.1}
+\end{table}
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\linewidth]{fig_5_1_attack_matrix.png}
+\caption{Comparative attack resistance overview (Figure 5.1).}\label{fig:5.1}
+\end{figure}
+
+\subsection{Quantitative Authentication Performance}
+
+\indent ECC-DTB-AKA achieves mutual authentication in 3 round trips with 0.52 ms mean cryptographic latency and 569 bytes total message overhead. Compared to TLS 1.3 (0.21 ms, 2800 bytes), ECC-DTB-AKA trades one additional round trip and smaller absolute latency for mutual authentication, device binding, and transaction binding---properties TLS does not provide natively \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}.
+
+\indent For server-server batch protection, ECC-HISE processes 100 records in 23.32 ms with 37823-byte envelopes versus 0.22 ms and 28400 bytes for static PSK. The 106$<<<PH0>>>$ latency premium purchases hierarchical keys, per-record Ed25519 signatures, and Merkle audit chains absent in static encryption \hyperref[ref:10]{[10]}\hyperref[ref:30]{[30]}.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\linewidth]{fig_5_2_combined_benchmark.png}
+\caption{Combined quantitative comparison of both schemes (Figure 5.2).}\label{fig:5.2}
+\end{figure}
+
+\subsection{Case-Based Effectiveness Assessment}
+
+\indent Against the Bangladesh Bank heist scenario (Section 1.1.2), ECC-HISE would require valid Ed25519 header signatures and consistent Merkle roots for fraudulent SWIFT messages to pass verification---raising the bar beyond local terminal compromise alone. Against credential-stuffing campaigns, ECC-DTB-AKA's PKI-based client authentication eliminates password guessing entirely when deployed with hardware-backed client keys. Against session hijacking via stolen JWTs, device\textsubscript{fp} binding in MSK derivation prevents session transfer to attacker-controlled devices without valid client signatures \hyperref[ref:10]{[10]}\hyperref[ref:20]{[20]}\hyperref[ref:24]{[24]}.
+
+\section{Prior Work on Authentication and Key Exchange}
+
+\indent This section reviews prior research and deployed protocols for authentication and key exchange in client-server and server-server environments of e-banking and e-finance services, expanding the overview presented in Section 1.2 with detailed algorithmic descriptions and comparative analysis against ECC-DTB-AKA \hyperref[ref:63]{[63]}\hyperref[ref:64]{[64]}.
+
+\subsection{TLS 1.3 Handshake Protocol}
+
+\indent TLS 1.3 (RFC 8446) is the dominant transport security protocol for e-banking. The full handshake operates as: (1) ClientHello with key\textsubscript{share} (typically X25519 or P-256); (2) ServerHello, EncryptedExtensions, Certificate, CertificateVerify, Finished; (3) Client Finished. Application traffic keys are derived via HKDF from the ECDH shared secret. Forward secrecy is mandatory; 0-RTT resumption is optional but vulnerable to replay \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}\hyperref[ref:4]{[4]}.
+
+\indent Limitations for e-banking: server-only authentication at the TLS layer; user identity established separately via application credentials; no device or transaction binding in key derivation. ECC-DTB-AKA addresses these by integrating user authentication and binding into the key agreement protocol itself \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}\hyperref[ref:63]{[63]}.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\linewidth]{fig_5_3_tls_handshake.png}
+\caption{TLS 1.3 full handshake flow (Figure 5.3).}\label{fig:5.3}
+\end{figure}
+
+\subsection{OAuth 2.0 and Open Banking (PKCE)}
+
+\indent OAuth 2.0 with PKCE (RFC 7636) enables third-party providers to access bank APIs with customer consent. Flow: (1) Client generates code\textsubscript{verifier} and code\textsubscript{challenge}; (2) Authorization request redirects customer to bank; (3) Customer authenticates and grants consent; (4) Authorization code returned; (5) Token exchange with code\textsubscript{verifier}; (6) Access token used for API calls. PKCE prevents authorization code interception \hyperref[ref:13]{[13]}\hyperref[ref:14]{[14]}.
+
+\indent Limitations: bearer access tokens; no cryptographic binding to transaction context; token theft enables API abuse until expiration. ECC-DTB-AKA's TBK-derived HMAC provides per-transaction authorization without bearer semantics.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\linewidth]{fig_5_4_oauth_pkce.png}
+\caption{OAuth 2.0 PKCE authorization flow for open banking (Figure 5.4).}\label{fig:5.4}
+\end{figure}
+
+\subsection{FIDO2 / WebAuthn}
+
+\indent FIDO2 combines WebAuthn (browser API) and CTAP2 (authenticator protocol) for phishing-resistant authentication. Registration: server sends challenge, authenticator generates credential key pair, returns attestation. Authentication: server sends challenge with rpId, authenticator signs with credential private key. The rpId binding prevents credential use on phishing domains \hyperref[ref:15]{[15]}\hyperref[ref:22]{[22]}.
+
+\indent Relation to ECC-DTB-AKA: FIDO2 credential public key can serve as PK\textsubscript{C} in ECC-DTB-AKA, combining phishing resistance with device/transaction-bound session keys. FIDO2 alone does not establish encrypted session keys or per-transaction derivation \hyperref[ref:15]{[15]}\hyperref[ref:22]{[22]}.
+
+\subsection{Server-Server Key Exchange (mTLS and SWIFT BKE)}
+
+\indent Mutual TLS uses X.509 client and server certificates for bidirectional authentication at the transport layer. Certificate rotation, OCSP stapling, and short-lived certs (24h) are best practices in microservice meshes. SWIFT bilateral key exchange (BKE) distributes symmetric keys for message authentication in the SWIFT network \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}\hyperref[ref:4]{[4]}.
+
+\indent Limitations: mTLS does not provide message-level integrity after TLS termination; SWIFT BKE relies on symmetric keys with manual distribution. ECC-DTB-AKA extends client-server auth; ECC-HISE extends server-server data protection beyond transport \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}\hyperref[ref:20]{[20]}.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\linewidth]{fig_5_5_mtls.png}
+\caption{mTLS service mesh authentication in banking microservices (Figure 5.5).}\label{fig:5.5}
+\end{figure}
+
+\subsection{Comparative Summary}
+
+\indent Table 5.2 summarizes authentication and key-exchange prior work against ECC-DTB-AKA across security properties and efficiency metrics from prototype benchmarks.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{llllll}
+\toprule
+Protocol & Mutual auth & Device bind & Txn bind & RTT & Latency (ms) \\
+\midrule
+TLS 1.3 & Server & No & No & 1 & 0.21 \\
+OAuth 2.0 PKCE & Delegated & No & No & 3+ & N/A \\
+FIDO2/WebAuthn & User & Partial & No & 2 & N/A \\
+Standard ECDH & No & No & No & 2 & 0.11 \\
+ECC-DTB-AKA & Yes & Yes & Yes & 3 & 0.52 \\
+\bottomrule
+\end{tabular}
+\caption{Table 5.2: Authentication and key-exchange prior work vs. ECC-DTB-AKA.}\label{tbl:5.2}
+\end{table}
+\subsection{EMV and Card-Present Authentication}
+
+\indent EMV (Europay, Mastercard, Visa) chip cards use ECDSA on secp256r1 for offline and online transaction authentication. Contactless payments add relay-attack vulnerabilities addressed by distance-bounding protocols under research. EMV addresses card-present channels; ECC-DTB-AKA addresses remote digital banking channels with similar ECC foundations but different binding requirements (device\textsubscript{fp}, txn\textsubscript{nonce}) \hyperref[ref:9]{[9]}\hyperref[ref:26]{[26]}\hyperref[ref:16]{[16]}.
+
+\section{Prior Work on Data Encryption, Security, and Integrity}
+
+\indent This section reviews prior approaches to data encryption, security, and integrity in e-banking and e-finance server-server channels, distinct from the authentication focus of Section 5.2, and compares them with ECC-HISE \hyperref[ref:63]{[63]}\hyperref[ref:64]{[64]}.
+
+\subsection{TLS Record Layer Protection}
+
+\indent TLS record layer encrypts application data using AEAD ciphers (AES-128-GCM or ChaCha20-Poly1305) with keys derived from the handshake. Protection ends at TLS termination: load balancers, API gateways, and service meshes decrypt and re-encrypt traffic at each hop. Stored or forwarded messages after termination lack persistent integrity proofs \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\linewidth]{fig_5_6_tls_vs_envelope.png}
+\caption{TLS record layer vs. persistent envelope integrity (Figure 5.6).}\label{fig:5.6}
+\end{figure}
+
+\subsection{ECIES and Hybrid Encryption}
+
+\indent Elliptic Curve Integrated Encryption Scheme (ECIES, SEC 1 / IEEE 1363a) combines ECDH key agreement with symmetric encryption and MAC. Standard ECIES encrypts individual messages but does not provide hierarchical key management, batch Merkle audit, or domain-separated key derivation. ECC-HISE extends ECIES concepts with batch-level Merkle roots and three-level HKDF hierarchy \hyperref[ref:3]{[3]}\hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}.
+
+\subsection{Static Pre-Shared Key File Encryption}
+
+\indent Inter-bank file transfer historically uses PGP/GPG or proprietary tools with symmetric keys distributed annually via secure courier. Keys remain valid for extended periods; compromise exposes all files encrypted under that key. Benchmark: static AES-GCM PSK achieves 0.22 ms for 100 records but provides no signatures, Merkle audit, or key hierarchy \hyperref[ref:2]{[2]}\hyperref[ref:30]{[30]}.
+
+\subsection{Blockchain and Distributed Ledger Audit}
+
+\indent Blockchain systems (Bitcoin, Ethereum, R3 Corda, Hyperledger Fabric) provide tamper-evident audit via Merkle trees and consensus. JPMorgan Onyx and similar platforms pilot distributed ledgers for settlement. Limitations: consensus latency, throughput constraints, and operational complexity. ECC-HISE adopts Merkle audit without distributed consensus, suitable for traditional settlement workflows \hyperref[ref:30]{[30]}\hyperref[ref:31]{[31]}\hyperref[ref:32]{[32]}.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\linewidth]{fig_5_7_merkle_compare.png}
+\caption{Merkle audit: blockchain vs. ECC-HISE envelope (Figure 5.7).}\label{fig:5.7}
+\end{figure}
+
+\subsection{Comparative Summary}
+
+\indent Table 5.3 compares data-protection prior work with ECC-HISE for 100-record batches.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{llllll}
+\toprule
+Approach & Hierarchy & Merkle audit & Per-record sig & Latency (ms) & Size (B) \\
+\midrule
+TLS record only & No & No & No & 0.24 & 28905 \\
+Static AES-GCM PSK & No & No & No & 0.22 & 28400 \\
+Standard ECIES & No & No & Optional & N/A & N/A \\
+Blockchain audit & Varies & Yes (consensus) & Varies & High & High \\
+ECC-HISE & Yes & Yes & Yes & 23.32 & 37823 \\
+\bottomrule
+\end{tabular}
+\caption{Table 5.3: Data encryption and integrity prior work vs. ECC-HISE.}\label{tbl:5.3}
+\end{table}
+\subsection{Database TDE and Column-Level Encryption}
+
+\indent Transparent Data Encryption (TDE) protects data at rest in Oracle, SQL Server, and PostgreSQL extensions. Column-level encryption targets sensitive fields (PAN, SSN). These mechanisms protect storage but not data in transit between services or audit integrity of exported settlement batches. ECC-HISE complements TDE by protecting inter-service batch transfer with verifiable integrity chains.
+
+\section{Synthesis: Vulnerabilities and Research Contributions}
+
+\indent This section synthesizes findings from Sections 5.1 through 5.3, lists security vulnerabilities present in existing e-banking and e-finance systems, and identifies the issues addressed by this dissertation \hyperref[ref:63]{[63]}\hyperref[ref:64]{[64]}.
+
+\subsection{Vulnerabilities in Existing Systems}
+
+\indent V1 --- Decoupled authentication layers: TLS encrypts channels without binding user identity to session keys, enabling session hijacking after token theft \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}.
+
+\indent V2 --- Absence of device binding: Standard ECDH and TLS do not incorporate device fingerprints in key derivation \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}\hyperref[ref:12]{[12]}.
+
+\indent V3 --- Bearer token semantics: OAuth and JWT sessions are transferable to any client possessing the token \hyperref[ref:13]{[13]}\hyperref[ref:14]{[14]}.
+
+\indent V4 --- Flat key hierarchies: Long-lived DEKs increase blast radius of key compromise.
+
+\indent V5 --- Transport-only integrity: mTLS and TLS do not protect data after termination \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}.
+
+\indent V6 --- Audit friction: Manual reconciliation required without cryptographic batch proofs.
+
+\indent V7 --- Static PSK rotation gaps: Infrequent key rotation in inter-bank file transfer.
+
+\indent V8 --- Legacy TLS configurations: TLS 1.2 without forward secrecy in some deployments \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}\hyperref[ref:8]{[8]}.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{lll}
+\toprule
+Vulnerability & Affected systems & Addressed by \\
+\midrule
+V1 Decoupled auth & TLS + app login & ECC-DTB-AKA \\
+V2 No device bind & TLS, ECDH & ECC-DTB-AKA \\
+V3 Bearer tokens & OAuth, JWT & ECC-DTB-AKA (TBK HMAC) \\
+V4 Flat keys & TDE, file PSK & ECC-HISE hierarchy \\
+V5 Transport-only & mTLS, TLS & ECC-HISE envelope \\
+V6 Audit friction & SIEM, manual & ECC-HISE Merkle \\
+V7 Static PSK & PGP inter-bank & ECC-HISE per-batch SK \\
+V8 Legacy TLS & Older gateways & ECC-DTB-AKA fixed alg \\
+\bottomrule
+\end{tabular}
+\caption{Table 5.4: Vulnerabilities in existing e-banking systems and dissertation responses.}\label{tbl:5.4}
+\end{table}
+\subsection{Research Contributions}
+
+\indent This dissertation makes the following original contributions to information security in e-banking and e-finance systems: \hyperref[ref:63]{[63]}\hyperref[ref:64]{[64]}
+
+\indent C1 --- ECC-DTB-AKA: A novel three-round ECC-based authenticated key agreement protocol with device fingerprint and transaction nonce binding in HKDF derivation, formally analyzed and quantitatively evaluated \hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}\hyperref[ref:7]{[7]}.
+
+\indent C2 --- ECC-HISE: A novel hierarchical secure envelope scheme with Merkle audit chains for server-server batch data transfer, providing confidentiality, integrity, and efficient audit verification \hyperref[ref:30]{[30]}.
+
+\indent C3 --- Dual-layer methodology: An integrated architecture combining client-server and server-server ECC-based security in a coherent e-financial service design.
+
+\indent C4 --- Prototype implementation: Working software demonstrating both schemes with REST APIs, benchmarks, and end-to-end integration tests.
+
+\indent C5 --- Quantitative evaluation: Empirical comparison with TLS 1.3, ECDH, static PSK, and TLS record-layer baselines using reproducible benchmark suites \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}\hyperref[ref:12]{[12]}.
+
+\subsection{Limitations and Future Work}
+
+\indent Limitations include: software-based key storage (no HSM in prototype); proof sketches rather than machine-verified proofs; simplified certificate handling; single-process settlement demo. Future work: post-quantum algorithm integration (ML-KEM, ML-DSA); HSM deployment; formal verification in ProVerif or Tamarin; large-scale field trial with partner institution; meta-Merkle trees for million-record national settlement \hyperref[ref:4]{[4]}\hyperref[ref:30]{[30]}\hyperref[ref:54]{[54]}.
+
+\subsection{Alignment with Regulatory Requirements}
+
+\indent PCI DSS Requirement 4 mandates strong cryptography for transmission; Requirement 3 for storage. PSD2 Strong Customer Authentication aligns with ECC-DTB-AKA mutual authentication. SWIFT CSP controls for integrity and non-repudiation align with ECC-HISE signed Merkle batch headers. The proposed schemes support compliance objectives while exceeding minimum baselines through integrated device binding and cryptographic audit \hyperref[ref:17]{[17]}\hyperref[ref:18]{[18]}\hyperref[ref:20]{[20]}.
+
+\section{Chapter Summary}
+
+\indent This chapter evaluated ECC-DTB-AKA and ECC-HISE against Chapter 1 attack mechanisms, reviewed prior work on authentication/key exchange (Section 5.2) and data encryption/integrity (Section 5.3), and synthesized eight identified vulnerabilities with five research contributions. Quantitative results confirm ECC-DTB-AKA achieves 0.52 ms authentication with superior security properties over TLS and ECDH, and ECC-HISE provides audit-capable batch protection at 23.32 ms per 100 records. The concluding remarks summarize contributions and outline future research directions \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}\hyperref[ref:12]{[12]}.
+

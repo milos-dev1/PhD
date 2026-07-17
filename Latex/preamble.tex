@@ -11,26 +11,43 @@
 \usepackage{booktabs}
 \usepackage{longtable}
 \usepackage{caption}
-\usepackage{hyperref}
 \usepackage{amsmath,amssymb}
 \usepackage{enumitem}
 \usepackage{microtype}
+\usepackage{xcolor}
 
+% Hyperlinks: clickable TOC, citations, figures
+\usepackage[hidelinks]{hyperref}
+\usepackage{bookmark}
 \hypersetup{
   colorlinks=true,
-  linkcolor=black,
-  citecolor=black,
+  linkcolor=blue!50!black,
+  citecolor=blue!50!black,
   urlcolor=blue,
+  bookmarks=true,
+  bookmarksnumbered=true,
   pdftitle={E-Banking ECC Security Thesis},
+  pdfauthor={PhD Dissertation},
 }
 
 \setcounter{secnumdepth}{3}
 \setcounter{tocdepth}{2}
 
-% Chapter title formatting
 \usepackage{titlesec}
 \titleformat{\chapter}[display]
   {\normalfont\huge\bfseries}{\chaptertitlename\ \thechapter}{20pt}{\Huge}
 \titleformat{\section}{\normalfont\Large\bfseries}{\thesection}{1em}{}
 \titleformat{\subsection}{\normalfont\large\bfseries}{\thesubsection}{1em}{}
+
+% Page numbers (centered footer)
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\fancypagestyle{plain}{%
+  \fancyhf{}%
+  \fancyfoot[C]{\thepage}%
+  \renewcommand{\headrulewidth}{0pt}%
+}
 

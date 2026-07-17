@@ -1,0 +1,19 @@
+\chapter{Appendix}
+\label{ch:appendix}
+
+\section{A. Algorithm Listings}
+
+\indent Algorithm A.1 (ECC-DTB-AKA Client Handshake): See Section 2.3.7. Algorithm A.2 (ECC-DTB-AKA Server Handshake): See Section 2.3.8. Algorithm A.3 (ECC-HISE Batch Envelope Construction): See Section 3.4.1--3.4.2. Algorithm A.4 (Merkle Root and Proof Verification): See prototype/ecc\textsubscript{hise}/merkle.py \hyperref[ref:30]{[30]}.
+
+\section{B. API Specification}
+
+\indent Prototype REST API (prototype/api/app.py): GET /health --- returns status and supported schemes. POST /auth/register --- body: \{device\textsubscript{id}\}; registers client key. POST /auth/handshake/init --- body: \{device\textsubscript{id}\}; returns session\textsubscript{id} and handshake data. POST /auth/handshake/complete --- body: \{session\textsubscript{id}, txn\textsubscript{nonce}\_hex\}; completes authentication. POST /settlement/submit-batch --- body: \{batch\textsubscript{id}, domain\textsubscript{id}, records[]\}; submits and verifies batch.
+
+\section{C. Benchmark Raw Data}
+
+\indent Chapter 2 benchmarks: thesis/benchmarks/chapter2\textsubscript{benchmarks}.json. Chapter 3 benchmarks: thesis/benchmarks/chapter3\textsubscript{benchmarks}.json. Reproduce via: python -m prototype.benchmarks.bench\textsubscript{dtb}\_aka \&\& python -m prototype.benchmarks.bench\textsubscript{hise}.
+
+\section{D. Prototype Module Index}
+
+\indent prototype/common/crypto\textsubscript{utils}.py --- SHA-256, HKDF, ECDH, ECDSA utilities. prototype/ecc\textsubscript{dtb}\_aka/protocol.py --- ECC-DTB-AKA client/server protocol. prototype/ecc\textsubscript{hise}/hierarchy.py --- hierarchical key derivation. prototype/ecc\textsubscript{hise}/merkle.py --- Merkle tree construction and proofs. prototype/ecc\textsubscript{hise}/envelope.py --- secure batch envelope. prototype/api/app.py --- FastAPI integration. prototype/benchmarks/ --- timing and size measurement scripts \hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}\hyperref[ref:9]{[9]}.
+

@@ -1,13 +1,21 @@
-# LaTeX Thesis
+# LaTeX Thesis (Full)
 
-B5 paper, 11pt Times (mathptmx), 1.5 line spacing.
+B5 paper, 11pt Times, 1.5 line spacing.
 
-## Build
+## Contents
+
+- Title page, Abstract
+- Clickable Table of Contents / List of Figures / List of Tables (`hyperref`)
+- Preface, Chapters 1--5, Conclusions, Appendix
+- References (67 entries) with clickable in-text `[n]` citations (`\hyperref`)
+- Page numbers (centered footer)
+
+## Build PDF
 
 ```bash
 cd Latex
 pdflatex main.tex
-pdflatex main.tex   # second pass for TOC/references
+pdflatex main.tex   # second pass for TOC and cross-refs
 ```
 
 Or from project root:
@@ -17,27 +25,9 @@ python scripts/generate_latex.py
 cd Latex && pdflatex main.tex && pdflatex main.tex
 ```
 
-## Structure
-
-```
-Latex/
-  main.tex              # Master document
-  preamble.tex          # Packages, B5 geometry, styling
-  frontmatter/
-    titlepage.tex
-    abstract.tex
-  chapters/
-    preface.tex
-    chapter01.tex
-    chapter02.tex
-    scheme_design.tex   # Appendix
-```
-
 Figures are loaded from `../thesis/figures/`.
 
 ## Regenerate from content
-
-Content lives in `content/*.py`. Regenerate LaTeX after edits:
 
 ```bash
 python scripts/generate_latex.py

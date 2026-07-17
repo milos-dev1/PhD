@@ -1,0 +1,174 @@
+\chapter{Architecture and Implementation}
+\label{ch:chapter04}
+
+\noindent\textit{Security System Architecture and Programmatic Implementation}\par\vspace{1em}
+
+\section{Security System Architecture of an E-Financial Service System}
+
+\indent This chapter describes the practical application of ECC-DTB-AKA (Chapter 2) and ECC-HISE (Chapter 3) within a unified e-financial service system. The architecture integrates both schemes into a layered security model spanning client devices, application services, settlement infrastructure, and governance components.
+
+\indent The system comprises four tiers aligned with the preface description: (1) Client Tier --- mobile and web banking applications executing ECC-DTB-AKA handshakes; (2) Application Tier --- API gateway, authentication service, and transaction engine validating session keys and transaction-bound HMACs; (3) Settlement Tier --- inter-bank batch processing using ECC-HISE envelopes; (4) Governance Tier --- certificate authority, master key management (HSM), and immutable audit storage for Merkle roots \hyperref[ref:3]{[3]}\hyperref[ref:4]{[4]}\hyperref[ref:30]{[30]}.
+
+\subsection{Architectural Layers and Trust Boundaries}
+
+\indent Trust boundaries define where cryptographic verification occurs. The client-server boundary is protected by ECC-DTB-AKA: both parties verify ECDSA signatures and derive MSK before any transaction API is invoked. The server-server boundary between settlement nodes is protected by ECC-HISE: batch headers and Merkle roots are verified before records enter the receiving bank's ledger \hyperref[ref:9]{[9]}\hyperref[ref:26]{[26]}\hyperref[ref:30]{[30]}.
+
+\indent Internal microservice communication within the application tier uses mTLS as a complementary transport control; ECC-DTB-AKA and ECC-HISE provide application-layer cryptographic guarantees that persist beyond TLS termination points \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\linewidth]{fig_4_1_architecture.png}
+\caption{Integrated e-financial service system architecture (Figure 4.1).}\label{fig:4.1}
+\end{figure}
+
+\subsection{Component Interaction Flow}
+
+\indent A representative customer fund-transfer flow proceeds as follows: (1) Mobile app executes ECC-DTB-AKA three-round handshake with the authentication service, establishing MSK and TBK for the pending transaction. (2) Transaction request is sent with HMAC(TBK, txn\textsubscript{nonce}) over HTTPS. (3) Transaction engine validates HMAC, debits customer account, and queues settlement record. (4) Settlement service batches records and constructs ECC-HISE envelope. (5) Envelope is transmitted to counterparty bank; receiver verifies Merkle root and signatures. (6) Audit log stores (batch\textsubscript{id}, Root, timestamp) for regulatory archive \hyperref[ref:30]{[30]}.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\linewidth]{fig_4_2_flow.png}
+\caption{End-to-end transaction and settlement flow (Figure 4.2).}\label{fig:4.2}
+\end{figure}
+
+\subsection{Technology Stack}
+
+\indent The prototype implementation uses Python 3.11 with the following stack: cryptography library (OpenSSL backend) for ECDH, ECDSA, AES-GCM, and Ed25519; FastAPI for REST API endpoints; SQLite (optional persistence layer) for customer registry and audit logs. Production deployment would substitute software key storage with HSM-backed modules and add horizontal scaling via container orchestration \hyperref[ref:2]{[2]}\hyperref[ref:9]{[9]}\hyperref[ref:26]{[26]}.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{llll}
+\toprule
+Layer & Component & Scheme & Technology \\
+\midrule
+Client & Mobile/Web App & ECC-DTB-AKA & Python client SDK \\
+Application & Auth Service & ECC-DTB-AKA & FastAPI + cryptography \\
+Application & Transaction API & TBK HMAC verify & FastAPI \\
+Settlement & Batch Service & ECC-HISE & Python envelope module \\
+Governance & Audit Store & Merkle roots & Append-only log \\
+\bottomrule
+\end{tabular}
+\caption{Table 4.1: Architecture components and technology mapping.}\label{tbl:4.1}
+\end{table}
+\section{Programmatic Implementation of ECC-DTB-AKA (Chapter 2)}
+
+\indent This section describes the software implementation of ECC-DTB-AKA as specified in Chapter 2, including module structure, class design, API endpoints, and test results from the prototype.
+
+\subsection{Module Structure}
+
+\indent The ECC-DTB-AKA implementation resides in prototype/ecc\textsubscript{dtb}\_aka/ with the following modules: protocol.py --- core protocol classes (ECCDTBAKAClient, ECCDTBAKAServer) and message dataclasses (ClientInit, ServerResponse, ClientConfirm, SessionState); demo.py --- standalone handshake demonstration; common/crypto\textsubscript{utils}.py --- shared SHA-256, HKDF, ECDH, ECDSA utilities \hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}\hyperref[ref:9]{[9]}.
+
+\indent The protocol module exposes run\textsubscript{handshake}() for end-to-end execution and individual methods for each round, enabling integration with HTTP-based APIs that map rounds to REST endpoints.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\linewidth]{fig_4_3_dtb_modules.png}
+\caption{ECC-DTB-AKA software module diagram (Figure 4.3).}\label{fig:4.3}
+\end{figure}
+
+\subsection{Core Classes and Data Structures}
+
+\indent ECCDTBAKAClient maintains long-term key pair (sk\textsubscript{C}, PK\textsubscript{C}), device fingerprint derived from hardware attributes, ephemeral key state, and session state after handshake completion. Key methods: create\textsubscript{init}() produces MSG1; process\textsubscript{response}() validates MSG2 and produces MSG3; derive\textsubscript{tbk}() computes transaction-bound keys.
+
+\indent ECCDTBAKAServer maintains registered client public keys, server long-term key pair, and pending session state between rounds. Key methods: process\textsubscript{init}() validates MSG1 and produces MSG2; verify\textsubscript{confirm}() validates MSG3 and returns SessionState.
+
+\indent Message dataclasses include message\textsubscript{size} properties for benchmark measurement. Total three-message handshake size averages 569 bytes in prototype benchmarks.
+
+\subsection{REST API Integration}
+
+\indent The FastAPI application (prototype/api/app.py) exposes ECC-DTB-AKA through REST endpoints: POST /auth/register --- register device and client key; POST /auth/handshake/init --- execute rounds 1--2, return session\textsubscript{id}; POST /auth/handshake/complete --- execute round 3 with txn\textsubscript{nonce}, return MSK confirmation. GET /health --- service health check.
+
+\indent This API design separates the three-round protocol across two HTTP requests (init combines client MSG1 and server MSG2; complete sends MSG3) to accommodate request-response web semantics while preserving protocol security properties.
+
+\subsection{Test Results}
+
+\indent Integration testing via prototype/api/demo\textsubscript{integration}.py confirms successful handshake completion with MSK derivation. Benchmark results (Chapter 2, n=200): mean authentication latency 0.52 ms, total message size 569 bytes, three round trips. All test cases for replay rejection, invalid signature detection, and unregistered client rejection pass.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{lll}
+\toprule
+Test Case & Expected & Result \\
+\midrule
+Valid handshake & MSK established & Pass \\
+Invalid client signature & Reject at server & Pass \\
+Invalid server signature & Reject at client & Pass \\
+Wrong txn\textsubscript{nonce} MAC & Reject at confirm & Pass \\
+Unregistered client & HTTP 404 / error & Pass \\
+\bottomrule
+\end{tabular}
+\caption{Table 4.2: ECC-DTB-AKA prototype test results.}\label{tbl:4.2}
+\end{table}
+\subsection{Key Derivation Implementation Details}
+
+\indent The HKDF implementation uses cryptography.hazmat.primitives.kdf.hkdf.HKDF with SHA-256 as the hash function. MSK derivation concatenates device\textsubscript{fp}, nonce\textsubscript{c}, and nonce\textsubscript{s} as salt with info string 'ECC-DTB-AKA-v1'. TBK derivation uses txn\textsubscript{nonce} as salt with info string 'TBK'. These domain-separated info strings prevent cross-protocol key reuse if additional derivation functions are added \hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}\hyperref[ref:27]{[27]}.
+
+\section{Programmatic Implementation of ECC-HISE (Chapter 3)}
+
+\indent This section describes the software implementation of ECC-HISE for server-server batch data protection, including envelope construction, Merkle audit chain, and settlement API \hyperref[ref:30]{[30]}.
+
+\subsection{Module Structure}
+
+\indent The ECC-HISE implementation resides in prototype/ecc\textsubscript{hise}/ with modules: hierarchy.py --- KeyHierarchy class for MK $<<<PH1>>>$ DK $<<<PH2>>>$ SK\textsubscript{batch} derivation; merkle.py --- merkle\textsubscript{root}(), merkle\textsubscript{proof}(), verify\textsubscript{merkle}\_proof(); envelope.py --- ECC\textsubscript{HISE}\_Sender, ECC\textsubscript{HISE}\_Receiver, SecureBatch dataclass; demo.py --- standalone batch demonstration \hyperref[ref:30]{[30]}.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\linewidth]{fig_4_4_hise_modules.png}
+\caption{ECC-HISE software module diagram (Figure 4.4).}\label{fig:4.4}
+\end{figure}
+
+\subsection{Envelope Construction and Verification}
+
+\indent ECC\textsubscript{HISE}\_Sender.build\textsubscript{batch}() accepts a list of record byte strings, batch\textsubscript{id}, and domain\textsubscript{id}. For each record it derives K\textsubscript{enc} from SK\textsubscript{batch} and record index, encrypts with AES-256-GCM, signs with Ed25519, and computes leaf hash. Merkle root is computed over all leaves and signed in the batch header \hyperref[ref:2]{[2]}\hyperref[ref:10]{[10]}\hyperref[ref:30]{[30]}.
+
+\indent ECC\textsubscript{HISE}\_Receiver.verify\textsubscript{and}\_decrypt() validates header signature, Merkle root consistency, per-record signatures, and GCM authentication tags before returning plaintext records. Merkle inclusion proofs are verified for each record during decryption to demonstrate audit capability \hyperref[ref:30]{[30]}.
+
+\subsection{Settlement API Integration}
+
+\indent POST /settlement/submit-batch accepts batch\textsubscript{id}, domain\textsubscript{id}, and list of record strings. The endpoint constructs an ECC-HISE envelope, verifies it internally (sender/receiver simulation), and returns merkle\textsubscript{root}, record\textsubscript{count}, total\textsubscript{bytes}, and verified status. In production, sender and receiver would be separate services; the prototype validates cryptographic correctness within a single process for demonstration \hyperref[ref:30]{[30]}.
+
+\subsection{Test Results and Performance}
+
+\indent Benchmark results for 100-record batches (Chapter 3, n=50): mean processing latency 23.32 ms, mean envelope size 37823 bytes. Integration demo processes 3-record batch with verified Merkle root. Tampering tests (modified ciphertext, wrong Merkle root, invalid signature) correctly raise verification errors \hyperref[ref:30]{[30]}.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{lll}
+\toprule
+Test Case & Expected & Result \\
+\midrule
+Valid batch encrypt/decrypt & Records match & Pass \\
+Tampered ciphertext & GCM / sig failure & Pass \\
+Wrong Merkle root & Root mismatch error & Pass \\
+Merkle proof verify & Inclusion confirmed & Pass \\
+100-record benchmark & < 30s latency & Pass \\
+\bottomrule
+\end{tabular}
+\caption{Table 4.3: ECC-HISE prototype test results.}\label{tbl:4.3}
+\end{table}
+\subsection{Merkle Tree Implementation}
+
+\indent The Merkle tree implementation (merkle.py) uses SHA-256 for internal nodes. Odd-length layers duplicate the last node (Bitcoin-style) to ensure deterministic root computation. Proof generation handles odd-layer promotion with self-pairing. Verification reconstructs the path from leaf to root in O(log n) hashes. For n=100 records, proof length is 7 hashes (224 bytes), enabling compact audit evidence \hyperref[ref:27]{[27]}\hyperref[ref:30]{[30]}\hyperref[ref:31]{[31]}.
+
+\section{Integrated System Demonstration}
+
+\indent The integrated demonstration (prototype/api/demo\textsubscript{integration}.py) executes a complete e-banking security workflow: device registration, ECC-DTB-AKA authentication handshake with transaction nonce, and ECC-HISE settlement batch submission with Merkle verification. This end-to-end test validates that both schemes operate correctly within a unified API framework and can be invoked sequentially in a realistic transaction lifecycle \hyperref[ref:30]{[30]}\hyperref[ref:63]{[63]}\hyperref[ref:64]{[64]}.
+
+\subsection{Deployment Considerations}
+
+\indent Production deployment recommendations: (1) Store MK in HSM; never persist in application memory beyond derivation operations. (2) Deploy auth and settlement services in separate network segments with mTLS. (3) Rotate SK\textsubscript{batch} automatically per batch; implement domain key rotation quarterly. (4) Persist audit logs (batch\textsubscript{id}, Root, timestamp) to WORM storage. (5) Rate-limit handshake endpoints to prevent DoS \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\linewidth]{fig_4_5_deployment.png}
+\caption{Deployment topology for prototype services (Figure 4.5).}\label{fig:4.5}
+\end{figure}
+
+\subsection{Limitations of the Prototype}
+
+\indent The prototype uses software-based key storage rather than HSM integration. Certificate management is simplified (server public key substituted for full X.509 chain). The settlement API performs sender and receiver verification in-process rather than across network boundaries. Persistent storage uses in-memory dictionaries. These simplifications do not affect the cryptographic correctness of the schemes but must be addressed before production deployment. Formal security proofs remain proof sketches as noted in Chapter 2 \hyperref[ref:4]{[4]}.
+
+\section{Chapter Summary}
+
+\indent This chapter presented the security system architecture and programmatic implementation of ECC-DTB-AKA and ECC-HISE in a unified e-financial service prototype. Section 4.1 defined four architectural tiers and component interactions. Sections 4.2 and 4.3 detailed module structure, API design, and test results for each scheme. Section 4.4 demonstrated end-to-end integration. Chapter 5 evaluates both schemes comprehensively, reviews prior work, and analyzes effectiveness against the attack mechanisms cataloged in Chapter 1.
+

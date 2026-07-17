@@ -80,5 +80,3 @@ htmlcov/
 
 # mypy
 .mypy_cache/
-
-*.docx

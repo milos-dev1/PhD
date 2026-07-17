@@ -231,7 +231,7 @@ PREFACE_DEEP = {
     "heading": "E-Banking in the Global Context",
     "paragraphs": [
         "The global e-banking landscape exhibits significant regional variation in technology adoption, "
-        "regulatory frameworks, and security postures. In Scandinavia, nearly 100% of banking customers "
+        "regulatory frameworks, and security postures [63][64]. In Scandinavia, nearly 100% of banking customers "
         "use digital channels, with mobile payment systems such as Swish and MobilePay achieving "
         "near-universal adoption. Strong government digital identity infrastructure (BankID in Sweden "
         "and Norway, NemID/MitID in Denmark) provides a foundation for cryptographic authentication "
