@@ -1,0 +1,588 @@
+[
+  {
+    "ref": 1,
+    "ok": true,
+    "skipped": false,
+    "title": "RFC 8446 \u2014 TLS 1.3",
+    "file": "01_RFC8446_TLS_1.3.pdf",
+    "bytes": 228299,
+    "companions": []
+  },
+  {
+    "ref": 2,
+    "ok": true,
+    "skipped": false,
+    "title": "NIST SP 800-38D \u2014 GCM",
+    "file": "02_NIST_SP800-38D_GCM.pdf",
+    "bytes": 271960,
+    "companions": []
+  },
+  {
+    "ref": 3,
+    "ok": true,
+    "skipped": false,
+    "title": "NIST SP 800-57 Part 1 Rev. 5 \u2014 Key management",
+    "file": "03_NIST_SP800-57pt1r5_Key_Management.pdf",
+    "bytes": 1688080,
+    "companions": []
+  },
+  {
+    "ref": 4,
+    "ok": true,
+    "skipped": false,
+    "title": "RFC 5280 \u2014 X.509 PKI",
+    "file": "04_RFC5280_X509_PKI.pdf",
+    "bytes": 207003,
+    "companions": []
+  },
+  {
+    "ref": 5,
+    "ok": true,
+    "skipped": false,
+    "title": "Krawczyk \u2014 HKDF (CRYPTO 2010)",
+    "file": "05_Krawczyk_HKDF_CRYPTO2010.pdf",
+    "bytes": 295061,
+    "companions": []
+  },
+  {
+    "ref": 6,
+    "ok": true,
+    "skipped": false,
+    "title": "RFC 5869 \u2014 HKDF",
+    "file": "06_RFC5869_HKDF.pdf",
+    "bytes": 22139,
+    "companions": []
+  },
+  {
+    "ref": 7,
+    "ok": true,
+    "skipped": false,
+    "title": "Bellare & Rogaway \u2014 Entity authentication",
+    "file": "07_Bellare_Rogaway_Entity_Auth.pdf",
+    "bytes": 382675,
+    "companions": []
+  },
+  {
+    "ref": 8,
+    "ok": true,
+    "skipped": false,
+    "title": "Canetti & Krawczyk \u2014 Key-exchange analysis",
+    "file": "08_Canetti_Krawczyk_Key_Exchange.pdf",
+    "bytes": 215714,
+    "companions": []
+  },
+  {
+    "ref": 9,
+    "ok": true,
+    "skipped": false,
+    "title": "Johnson et al. \u2014 ECDSA",
+    "file": "09_Johnson_Menezes_Vanstone_ECDSA.pdf",
+    "bytes": 490041,
+    "companions": []
+  },
+  {
+    "ref": 10,
+    "ok": true,
+    "skipped": false,
+    "title": "RFC 8032 \u2014 Ed25519 / EdDSA",
+    "file": "10_RFC8032_Ed25519.pdf",
+    "bytes": 82342,
+    "companions": []
+  },
+  {
+    "ref": 11,
+    "ok": true,
+    "skipped": false,
+    "title": "SEC 1 \u2014 Elliptic Curve Cryptography",
+    "file": "11_SEC1_Elliptic_Curve_Cryptography.pdf",
+    "bytes": 970457,
+    "companions": []
+  },
+  {
+    "ref": 12,
+    "ok": false,
+    "skipped": true,
+    "title": "ANSI X9.63",
+    "file": null,
+    "detail": "Paywalled ANSI standard"
+  },
+  {
+    "ref": 13,
+    "ok": true,
+    "skipped": false,
+    "title": "RFC 6749 \u2014 OAuth 2.0",
+    "file": "13_RFC6749_OAuth2.pdf",
+    "bytes": 112898,
+    "companions": []
+  },
+  {
+    "ref": 14,
+    "ok": true,
+    "skipped": false,
+    "title": "RFC 8252 \u2014 OAuth for native apps",
+    "file": "14_RFC8252_OAuth_Native_Apps.pdf",
+    "bytes": 35155,
+    "companions": []
+  },
+  {
+    "ref": 15,
+    "ok": true,
+    "skipped": false,
+    "title": "W3C WebAuthn Level 2",
+    "file": "15_W3C_WebAuthn.html",
+    "bytes": 1711644,
+    "companions": []
+  },
+  {
+    "ref": 16,
+    "ok": false,
+    "skipped": true,
+    "title": "EMVCo Book 2",
+    "file": null,
+    "detail": "EMVCo registration required"
+  },
+  {
+    "ref": 17,
+    "ok": false,
+    "skipped": true,
+    "title": "PCI DSS v4.0",
+    "file": null,
+    "detail": "PCI DSS download portal / bot protection"
+  },
+  {
+    "ref": 18,
+    "ok": false,
+    "skipped": true,
+    "title": "EU PSD2 (Directive 2015/2366)",
+    "file": null,
+    "detail": "EUR-Lex PDF blocked from this network (try browser manually)"
+  },
+  {
+    "ref": 19,
+    "ok": false,
+    "skipped": true,
+    "title": "ISO/IEC 27001:2022",
+    "file": null,
+    "detail": "Paywalled ISO standard"
+  },
+  {
+    "ref": 20,
+    "ok": false,
+    "skipped": true,
+    "title": "SWIFT CSP",
+    "file": null,
+    "detail": "SWIFT portal access required"
+  },
+  {
+    "ref": 21,
+    "ok": false,
+    "skipped": true,
+    "title": "IBM Cost of a Data Breach 2024",
+    "file": null,
+    "detail": "IBM gated marketing download"
+  },
+  {
+    "ref": 22,
+    "ok": true,
+    "skipped": false,
+    "title": "Verizon DBIR 2024",
+    "file": "22_Verizon_DBIR_2024.pdf",
+    "bytes": 8069301,
+    "companions": []
+  },
+  {
+    "ref": 23,
+    "ok": true,
+    "skipped": false,
+    "title": "OWASP API Security Top 10 (2023 commentary PDF)",
+    "file": "23_OWASP_API_Security_Top10_2023.pdf",
+    "bytes": 34452106,
+    "companions": []
+  },
+  {
+    "ref": 24,
+    "ok": false,
+    "skipped": true,
+    "title": "Bangladesh Bank SWIFT heist",
+    "file": null,
+    "detail": "No single canonical public investigation PDF"
+  },
+  {
+    "ref": 25,
+    "ok": true,
+    "skipped": false,
+    "title": "Kaspersky \u2014 Carbanak",
+    "file": "25_Kaspersky_Carbanak.pdf",
+    "bytes": 3721625,
+    "companions": []
+  },
+  {
+    "ref": 26,
+    "ok": true,
+    "skipped": false,
+    "title": "FIPS 186-5 \u2014 Digital signatures",
+    "file": "26_FIPS186-5_Digital_Signatures.pdf",
+    "bytes": 1844414,
+    "companions": []
+  },
+  {
+    "ref": 27,
+    "ok": true,
+    "skipped": false,
+    "title": "FIPS 180-4 \u2014 Secure Hash Standard",
+    "file": "27_FIPS180-4_Secure_Hash.pdf",
+    "bytes": 833315,
+    "companions": []
+  },
+  {
+    "ref": 28,
+    "ok": true,
+    "skipped": false,
+    "title": "NIST SP 800-52 Rev. 2 \u2014 TLS",
+    "file": "28_NIST_SP800-52r2_TLS.pdf",
+    "bytes": 814862,
+    "companions": []
+  },
+  {
+    "ref": 29,
+    "ok": true,
+    "skipped": false,
+    "title": "NIST SP 800-56A Rev. 3 \u2014 Key establishment",
+    "file": "29_NIST_SP800-56Ar3_Key_Establishment.pdf",
+    "bytes": 1747471,
+    "companions": []
+  },
+  {
+    "ref": 30,
+    "ok": true,
+    "skipped": false,
+    "title": "Merkle \u2014 Digital signature / hash trees (CRYPTO 1987)",
+    "file": "30_Merkle_Digital_Signature_CRYPTO1987.pdf",
+    "bytes": 751903,
+    "companions": []
+  },
+  {
+    "ref": 31,
+    "ok": true,
+    "skipped": false,
+    "title": "Bitcoin whitepaper",
+    "file": "31_Bitcoin_Whitepaper.pdf",
+    "bytes": 184292,
+    "companions": []
+  },
+  {
+    "ref": 32,
+    "ok": true,
+    "skipped": false,
+    "title": "Corda introductory whitepaper",
+    "file": "32_Corda_Introduction.pdf",
+    "bytes": 791095,
+    "companions": []
+  },
+  {
+    "ref": 33,
+    "ok": true,
+    "skipped": false,
+    "title": "Diffie & Hellman \u2014 New Directions in Cryptography",
+    "file": "33_Diffie_Hellman_New_Directions.pdf",
+    "bytes": 2216632,
+    "companions": []
+  },
+  {
+    "ref": 34,
+    "ok": true,
+    "skipped": false,
+    "title": "Miller \u2014 Use of Elliptic Curves in Cryptography",
+    "file": "34_Miller_Elliptic_Curves_CRYPTO1985.pdf",
+    "bytes": 3249245,
+    "companions": []
+  },
+  {
+    "ref": 35,
+    "ok": true,
+    "skipped": false,
+    "title": "Koblitz \u2014 Elliptic Curve Cryptosystems",
+    "file": "35_Koblitz_Elliptic_Curve_Cryptosystems.pdf",
+    "bytes": 859301,
+    "companions": []
+  },
+  {
+    "ref": 36,
+    "ok": true,
+    "skipped": false,
+    "title": "Boneh & Franklin \u2014 IBE",
+    "file": "36_Boneh_Franklin_IBE.pdf",
+    "bytes": 292908,
+    "companions": []
+  },
+  {
+    "ref": 37,
+    "ok": true,
+    "skipped": false,
+    "title": "Bellare & Namprempre \u2014 Authenticated encryption",
+    "file": "37_Bellare_Namprempre_Authenticated_Encryption.pdf",
+    "bytes": 197206,
+    "companions": []
+  },
+  {
+    "ref": 38,
+    "ok": true,
+    "skipped": false,
+    "title": "Dolev & Yao \u2014 Public-key protocols (Stanford TR)",
+    "file": "38_Dolev_Yao_Public_Key_Protocols.pdf",
+    "bytes": 835414,
+    "companions": []
+  },
+  {
+    "ref": 39,
+    "ok": true,
+    "skipped": false,
+    "title": "Wagner/Gennaro et al. \u2014 SSL 3.0 analysis",
+    "file": "39_Gennaro_SSL3_Analysis.pdf",
+    "bytes": 350396,
+    "companions": []
+  },
+  {
+    "ref": 40,
+    "ok": false,
+    "skipped": true,
+    "title": "Rescorla \u2014 SSL and TLS (book)",
+    "file": null,
+    "detail": "Commercial book"
+  },
+  {
+    "ref": 41,
+    "ok": true,
+    "skipped": false,
+    "title": "Handbook of Applied Cryptography (free chapters)",
+    "file": "41_Handbook_Applied_Cryptography.pdf",
+    "bytes": 343046,
+    "companions": [
+      "41b_HAC_chapter10.pdf",
+      "41c_HAC_chapter12.pdf"
+    ]
+  },
+  {
+    "ref": 42,
+    "ok": false,
+    "skipped": true,
+    "title": "Katz & Lindell \u2014 Modern Cryptography (book)",
+    "file": null,
+    "detail": "Commercial book"
+  },
+  {
+    "ref": 43,
+    "ok": false,
+    "skipped": true,
+    "title": "Stallings \u2014 Cryptography and Network Security (book)",
+    "file": null,
+    "detail": "Commercial book"
+  },
+  {
+    "ref": 44,
+    "ok": true,
+    "skipped": false,
+    "title": "Anderson \u2014 Security Engineering (author PDF)",
+    "file": "44_Anderson_Security_Engineering.pdf",
+    "bytes": 9149696,
+    "companions": []
+  },
+  {
+    "ref": 45,
+    "ok": false,
+    "skipped": true,
+    "title": "Schneier \u2014 Applied Cryptography (book)",
+    "file": null,
+    "detail": "Commercial book"
+  },
+  {
+    "ref": 46,
+    "ok": false,
+    "skipped": true,
+    "title": "Ferguson et al. \u2014 Cryptography Engineering (book)",
+    "file": null,
+    "detail": "Commercial book"
+  },
+  {
+    "ref": 47,
+    "ok": false,
+    "skipped": true,
+    "title": "Gordon et al. \u2014 Breaches / stock market",
+    "file": null,
+    "detail": "Paywalled journal article"
+  },
+  {
+    "ref": 48,
+    "ok": false,
+    "skipped": true,
+    "title": "Ponemon / Accenture cyber cost study",
+    "file": null,
+    "detail": "Vendor-gated report"
+  },
+  {
+    "ref": 49,
+    "ok": true,
+    "skipped": false,
+    "title": "BIS \u2014 Principles for Financial Market Infrastructures",
+    "file": "49_BIS_PFMI.pdf",
+    "bytes": 1117912,
+    "companions": []
+  },
+  {
+    "ref": 50,
+    "ok": false,
+    "skipped": true,
+    "title": "ECB \u2014 Guide to internal models",
+    "file": null,
+    "detail": "ECB PDF URL changed / blocked"
+  },
+  {
+    "ref": 51,
+    "ok": true,
+    "skipped": false,
+    "title": "Basel \u2014 Operational risk sound practices",
+    "file": "51_Basel_Operational_Risk_Sound_Practices.pdf",
+    "bytes": 101270,
+    "companions": []
+  },
+  {
+    "ref": 52,
+    "ok": true,
+    "skipped": false,
+    "title": "Open Banking UK \u2014 security profile (HTML)",
+    "file": "52_Open_Banking_UK_Security_Profile.html",
+    "bytes": 879296,
+    "companions": []
+  },
+  {
+    "ref": 53,
+    "ok": false,
+    "skipped": true,
+    "title": "CSA Cloud Security Guidance v4",
+    "file": null,
+    "detail": "CSA gated download"
+  },
+  {
+    "ref": 54,
+    "ok": true,
+    "skipped": false,
+    "title": "NIST PQC \u2014 FIPS 203 ML-KEM (+ FIPS 204 companion)",
+    "file": "54_NIST_PQC_ML-KEM_ML-DSA.pdf",
+    "bytes": 1252341,
+    "companions": [
+      "54b_NIST_FIPS204_ML-DSA.pdf"
+    ]
+  },
+  {
+    "ref": 55,
+    "ok": true,
+    "skipped": false,
+    "title": "Bernstein \u2014 Curve25519",
+    "file": "55_Bernstein_Curve25519.pdf",
+    "bytes": 229091,
+    "companions": []
+  },
+  {
+    "ref": 56,
+    "ok": false,
+    "skipped": true,
+    "title": "IEEE 1363a \u2014 ECIES",
+    "file": null,
+    "detail": "Paywalled IEEE standard"
+  },
+  {
+    "ref": 57,
+    "ok": false,
+    "skipped": true,
+    "title": "ANSI X9.102 \u2014 Key wrap",
+    "file": null,
+    "detail": "Paywalled ANSI standard"
+  },
+  {
+    "ref": 58,
+    "ok": true,
+    "skipped": false,
+    "title": "RFC 5652 \u2014 CMS",
+    "file": "58_RFC5652_CMS.pdf",
+    "bytes": 80846,
+    "companions": []
+  },
+  {
+    "ref": 59,
+    "ok": true,
+    "skipped": false,
+    "title": "RFC 8017 \u2014 PKCS #1",
+    "file": "59_RFC8017_PKCS1.pdf",
+    "bytes": 106860,
+    "companions": []
+  },
+  {
+    "ref": 60,
+    "ok": false,
+    "skipped": true,
+    "title": "Goodrich & Tamassia \u2014 Algorithm Design (book)",
+    "file": null,
+    "detail": "Commercial book"
+  },
+  {
+    "ref": 61,
+    "ok": true,
+    "skipped": false,
+    "title": "Camenisch & Lysyanskaya \u2014 Anonymous credentials",
+    "file": "61_Camenisch_Lysyanskaya_Anonymous_Credentials.pdf",
+    "bytes": 258158,
+    "companions": []
+  },
+  {
+    "ref": 62,
+    "ok": true,
+    "skipped": false,
+    "title": "Bhargavan et al. \u2014 Triple handshakes / TLS",
+    "file": "62_Bhargavan_Triple_Handshakes_TLS.pdf",
+    "bytes": 1815983,
+    "companions": []
+  },
+  {
+    "ref": 63,
+    "ok": false,
+    "skipped": true,
+    "title": "Dennis et al. \u2014 E-banking security survey",
+    "file": null,
+    "detail": "Paywalled journal article"
+  },
+  {
+    "ref": 64,
+    "ok": false,
+    "skipped": true,
+    "title": "Aloul et al. \u2014 Online banking security",
+    "file": null,
+    "detail": "Author PDF not reachable (403/HTML)"
+  },
+  {
+    "ref": 65,
+    "ok": true,
+    "skipped": false,
+    "title": "de Ruiter & Poll \u2014 TLS state fuzzing",
+    "file": "65_Ruiter_Poll_TLS_State_Fuzzing.pdf",
+    "bytes": 1752357,
+    "companions": []
+  },
+  {
+    "ref": 66,
+    "ok": true,
+    "skipped": false,
+    "title": "Cremers et al. \u2014 TAMARIN",
+    "file": "66_Cremers_TAMARIN_Prover.pdf",
+    "bytes": 216633,
+    "companions": []
+  },
+  {
+    "ref": 67,
+    "ok": true,
+    "skipped": false,
+    "title": "Blanchet \u2014 ProVerif survey",
+    "file": "67_Blanchet_ProVerif.pdf",
+    "bytes": 1129656,
+    "companions": []
+  }
+]
