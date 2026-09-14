@@ -33,7 +33,7 @@
 
 \subsection{Technology Stack}
 
-\indent The prototype implementation uses Python 3.11 with the following stack: cryptography library (OpenSSL backend) for ECDH, ECDSA, AES-GCM, and Ed25519; FastAPI for REST API endpoints; SQLite (optional persistence layer) for customer registry and audit logs. Production deployment would substitute software key storage with HSM-backed modules and add horizontal scaling via container orchestration \hyperref[ref:2]{[2]}\hyperref[ref:9]{[9]}\hyperref[ref:26]{[26]}.
+\indent The prototype implementation uses Python 3.11 with the following stack: cryptography library (OpenSSL backend) for ECDH, ECDSA, AES-GCM, and Ed25519; FastAPI for REST API endpoints; SQLite (optional persistence layer) for customer registry and audit logs. Production deployment would substitute software key storage with HSM-backed modules and add horizontal scaling via container orchestration \hyperref[ref:2]{[2]}\hyperref[ref:9]{[9]}\hyperref[ref:26]{[26]}\hyperref[ref:10]{[10]}.
 
 \begin{table}[htbp]
 \centering
@@ -50,13 +50,53 @@ Governance & Audit Store & Merkle roots & Append-only log \\
 \end{tabular}
 \caption{Table 4.1: Architecture components and technology mapping.}\label{tbl:4.1}
 \end{table}
+\subsection{Trust Boundaries and Data Flow Classification}
+
+\indent The reference architecture divides the e-financial service system into four trust zones: (1) the customer device zone, where ECC-DTB-AKA client logic and device fingerprinting execute; (2) the DMZ/API zone, terminating TLS and hosting API gateways; (3) the internal services zone, containing authentication, payment orchestration, and fraud engines; and (4) the settlement zone, where ECC-HISE senders and receivers exchange batch envelopes with counterparties or clearing houses \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}.
+
+\indent Data are classified as public metadata (routing identifiers), confidential PII/financial payloads, and cryptographic material (private keys, MSK, DK\textsubscript{i}). Cryptographic material never crosses into the DMZ in unprotected form; HSMs or sealed service vaults issue signatures and derivations via constrained APIs. Confidential payloads may traverse the DMZ only as AEAD ciphertexts under ECC-DTB-AKA transaction keys or as ECC-HISE envelopes.
+
+\indent This zoning explains why transport security alone is insufficient: the DMZ necessarily decrypts TLS, creating a plaintext hotspot. Application-layer bindings (device\textsubscript{fp}, txn\textsubscript{nonce}) and envelopes (Merkle-signed batches) preserve security goals across that hotspot \hyperref[ref:30]{[30]}\hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}.
+
+\subsection{Mapping Requirements to Architectural Components}
+
+\indent Security requirements SR1--SR4 from Chapter 1 map to the ECC-DTB-AKA service and client SDK: mutual authentication, forward secrecy, device binding, and per-transaction keys. SR5--SR8 map to the ECC-HISE settlement service: confidentiality of batch records, authenticity, integrity/ordering, and efficient audit. Non-cryptographic controls---rate limiting, device attestation services, fraud scoring---remain complementary and are represented as adjacent components in the architecture diagrams of this chapter \hyperref[ref:1]{[1]}\hyperref[ref:8]{[8]}.
+
+\indent The technology mapping favors Python for the research prototype (rapid iteration, clear algorithms) with cryptography backends that wrap OpenSSL or equivalent. A production port would relocate hot paths to languages and HSM PKCS\#11 interfaces already certified in the bank's estate, without changing wire formats or HKDF labels \hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}.
+
+\subsection{Operational Security Controls Complementary to Cryptography}
+
+\indent Cryptographic schemes do not replace operational security. Rate limiting on handshake endpoints, anomaly detection on verification-failure rates, certificate revocation checking, and segregation of duties for HSM administrators remain mandatory. The architecture places these controls adjacent to ECC-DTB-AKA and ECC-HISE services so that cryptographic failures and operational signals can be correlated in a common SIEM pipeline \hyperref[ref:4]{[4]}.
+
+\indent Change-management procedures for HKDF label strings, envelope version bytes, and Merkle algorithm identifiers must be treated as security-relevant configuration. Silent drift between sender and receiver encodings produces systemic verification failures that can be mistaken for attacks; therefore configuration is versioned and signed alongside application releases \hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}\hyperref[ref:30]{[30]}.
+
+\subsection{Regulatory and Assurance Alignment}
+
+\indent The dual-layer architecture aligns with assurance themes common to PCI DSS (protect cardholder data in transit and at rest), PSD2 strong customer authentication (possession factors for remote payments), and SWIFT Customer Security Programme controls on interface integrity. ECC-DTB-AKA strengthens possession of a client authenticator bound to session keys; ECC-HISE strengthens integrity and auditability of inter-institution data exchanges \hyperref[ref:17]{[17]}\hyperref[ref:18]{[18]}\hyperref[ref:20]{[20]}\hyperref[ref:24]{[24]}.
+
+\indent The dissertation does not claim automatic compliance certification. Rather, it provides cryptographic mechanisms that map cleanly onto control objectives auditors already expect, reducing reliance on procedural compensating controls for session binding and batch integrity.
+
+\subsection{Interface Contracts Between Tiers}
+
+\indent Each tier exposes a narrow interface contract. The client tier may call only authentication and transaction APIs; it never contacts settlement nodes directly. The application tier emits settlement records through a queue abstraction with schema validation before ECC-HISE packaging. The settlement tier accepts only envelopes whose domain\textsubscript{id} and key\textsubscript{version} are on an allow-list maintained by governance. The governance tier publishes trust anchors and consumes Merkle roots for archival, without holding plaintext settlement payloads by default \hyperref[ref:30]{[30]}.
+
+\indent These contracts reduce lateral movement: compromise of a DMZ API gateway yields TLS-terminated HTTP traffic and application tokens, but not MK, DK\textsubscript{i}, or the ability to forge ECC-HISE header signatures without settlement-zone keys. Conversely, compromise of a settlement signer does not grant interactive ECC-DTB-AKA sessions with customers. The dual-layer split is therefore also a blast-radius split \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}.
+
+\indent Message schemas are versioned. Breaking changes require simultaneous client SDK and server deployment windows, coordinated like certificate rotations. Non-breaking additive fields are ignored by older verifiers under explicit forward-compatibility rules documented in the prototype API \hyperref[ref:4]{[4]}.
+
+\subsection{Threat Model Instantiation for the Reference Architecture}
+
+\indent The architectural threat model assumes a network adversary who can eavesdrop, inject, and replay messages on client-Internet and inter-bank links; a malicious or compromised peer service inside the DMZ after TLS termination; and an honest-but-curious auditor who should verify inclusion without learning unrelated records. It does not assume physical possession of HSM-backed MK, nor unrestricted malware on a hardware-attested client device \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}.
+
+\indent Under this model, ECC-DTB-AKA targets remote session abuse and impersonation, while ECC-HISE targets undetectable mutation of settlement batches and inefficient audit. Social engineering of authorized users and colluding insiders with signing authority remain residual risks addressed by fraud engines and dual control, not by these protocols alone.
+
 \section{Programmatic Implementation of ECC-DTB-AKA (Chapter 2)}
 
 \indent This section describes the software implementation of ECC-DTB-AKA as specified in Chapter 2, including module structure, class design, API endpoints, and test results from the prototype.
 
 \subsection{Module Structure}
 
-\indent The ECC-DTB-AKA implementation resides in prototype/ecc\textsubscript{dtb}\_aka/ with the following modules: protocol.py --- core protocol classes (ECCDTBAKAClient, ECCDTBAKAServer) and message dataclasses (ClientInit, ServerResponse, ClientConfirm, SessionState); demo.py --- standalone handshake demonstration; common/crypto\textsubscript{utils}.py --- shared SHA-256, HKDF, ECDH, ECDSA utilities \hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}\hyperref[ref:9]{[9]}.
+\indent The ECC-DTB-AKA implementation resides in prototype/ecc\textsubscript{dtb}\_aka/ with the following modules: protocol.py --- core protocol classes (ECCDTBAKAClient, ECCDTBAKAServer) and message dataclasses (ClientInit, ServerResponse, ClientConfirm, SessionState); demo.py --- standalone handshake demonstration; common/crypto\textsubscript{utils}.py --- shared SHA-256, HKDF, ECDH, ECDSA utilities \hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}\hyperref[ref:9]{[9]}\hyperref[ref:26]{[26]}.
 
 \indent The protocol module exposes run\textsubscript{handshake}() for end-to-end execution and individual methods for each round, enabling integration with HTTP-based APIs that map rounds to REST endpoints.
 
@@ -103,6 +143,44 @@ Unregistered client & HTTP 404 / error & Pass \\
 
 \indent The HKDF implementation uses cryptography.hazmat.primitives.kdf.hkdf.HKDF with SHA-256 as the hash function. MSK derivation concatenates device\textsubscript{fp}, nonce\textsubscript{c}, and nonce\textsubscript{s} as salt with info string 'ECC-DTB-AKA-v1'. TBK derivation uses txn\textsubscript{nonce} as salt with info string 'TBK'. These domain-separated info strings prevent cross-protocol key reuse if additional derivation functions are added \hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}\hyperref[ref:27]{[27]}.
 
+\subsection{State Machine and Error Handling}
+
+\indent The handshake is implemented as an explicit state machine: INIT $<<<PH0>>>$ WAIT\textsubscript{MSG2} $<<<PH2>>>$ ESTABLISHED on the client; LISTEN $<<<PH3>>>$ WAIT\textsubscript{MSG3} $<<<PH5>>>$ ESTABLISHED on the server. Transitions fail closed on signature verification errors, certificate path failures, registry misses, or nonce reuse. Failed sessions delete ephemeral ECDH scalars immediately and do not emit partial MSK material to application logs \hyperref[ref:4]{[4]}\hyperref[ref:12]{[12]}\hyperref[ref:29]{[29]}.
+
+\indent Idempotency of MSG3 confirmation uses (client\textsubscript{id}, nonce\textsubscript{c}, nonce\textsubscript{s}) as a server-side replay key with TTL matching the session lifetime. This prevents an adversary from replaying a captured confirmation to re-derive acceptance of an already completed handshake.
+
+\subsection{Device Fingerprint Pipeline}
+
+\indent Device fingerprinting in the prototype hashes a canonicalized attribute vector (platform identifiers, app attestation digest when available, and installation salt) to a 128-bit truncation for protocol messages. Production deployments should prefer hardware-backed attestation (e.g., Android Play Integrity, Apple App Attest, or TPM quotes) and treat the fingerprint as a high-entropy binding input rather than a privacy-invasive tracking identifier.
+
+\indent Privacy note: fingerprints are used only as HKDF salt material and server-side binding checks; they are not designed as a global cross-bank identifier. Banks may rotate installation salts on reinstall, accepting that sessions must be re-established---consistent with device-binding goals \hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}.
+
+\subsection{Interoperability with Existing Login Flows}
+
+\indent ECC-DTB-AKA can wrap or replace password-plus-OTP login. In a transitional deployment, the bank continues to verify primary credentials, then runs ECC-DTB-AKA to establish MSK/TBK for subsequent high-risk operations (payments, beneficiary changes). Over time, FIDO2 credentials can serve as the long-term client key PK\textsubscript{C}, unifying phishing-resistant authentication with device-bound session keys \hyperref[ref:15]{[15]}\hyperref[ref:22]{[22]}.
+
+\indent The REST integration exposes /handshake/msg1, /handshake/msg2, and /handshake/msg3 endpoints plus /transaction/authorize that requires an HMAC under TBK. This mirrors how OAuth access tokens are presented today, but replaces bearer tokens with transaction-bound authenticator tags \hyperref[ref:13]{[13]}\hyperref[ref:14]{[14]}.
+
+\subsection{Logging, Observability, and Secrets Hygiene}
+
+\indent Prototype logging records handshake outcomes, client identifiers, and truncated nonce digests, never raw ECDH scalars, MSK, or TBK. Production deployments should emit structured events suitable for fraud correlation while retaining cryptographic material exclusively in HSM or sealed memory \hyperref[ref:12]{[12]}\hyperref[ref:29]{[29]}.
+
+\indent Distributed tracing spans may carry session\textsubscript{id} handles but must not carry material that enables offline analysis of long-term keys. Clock skew beyond a configured window causes handshakes to fail closed with a distinct error code distinguishing configuration faults from replay attempts.
+
+\subsection{Concurrency and Session Store Design}
+
+\indent Pending handshake state between MSG1 and MSG3 is stored under a server-generated session\textsubscript{id} with a short TTL (prototype: tens of seconds). Concurrent handshakes from the same client\textsubscript{id} are allowed only up to a small bound; excess attempts are rate-limited. On ESTABLISHED, ephemeral ECDH private keys are zeroized in the process where the language runtime permits \hyperref[ref:12]{[12]}\hyperref[ref:29]{[29]}.
+
+\indent Horizontal scaling of the auth service requires a shared session store (Redis or equivalent) or sticky routing. The store holds public transcript fields and verification intermediates, not MSK. After confirmation, only a handle referencing HSM-sealed key material (or a short-lived derived token for non-HSM prototypes) is returned to the transaction API.
+
+\indent Load tests should measure not only cryptographic latency but lock contention on the client registry and nonce-replay cache. The dissertation benchmarks isolate crypto cores; production capacity planning must add network and store overheads measured on target hardware.
+
+\subsection{Negative Testing and Property-Based Checks}
+
+\indent Beyond the pass/fail table in Section 4.2.4, the prototype includes negative tests that flip signature bytes, truncate messages, reuse nonces, swap client identities, and present unregistered PK\textsubscript{C} values. Property-oriented checks assert that MSK differs whenever device\textsubscript{fp} or either nonce differs, and that TBK differs whenever txn\textsubscript{nonce} differs, approximating the binding claims of Chapter 2 at the implementation level.
+
+\indent Continuous integration runs these tests on every change to protocol.py. Regressions in canonical encoding or HKDF labels are treated as release blockers because they silently break interoperability and security assumptions \hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}.
+
 \section{Programmatic Implementation of ECC-HISE (Chapter 3)}
 
 \indent This section describes the software implementation of ECC-HISE for server-server batch data protection, including envelope construction, Merkle audit chain, and settlement API \hyperref[ref:30]{[30]}.
@@ -121,7 +199,7 @@ Unregistered client & HTTP 404 / error & Pass \\
 
 \indent ECC\textsubscript{HISE}\_Sender.build\textsubscript{batch}() accepts a list of record byte strings, batch\textsubscript{id}, and domain\textsubscript{id}. For each record it derives K\textsubscript{enc} from SK\textsubscript{batch} and record index, encrypts with AES-256-GCM, signs with Ed25519, and computes leaf hash. Merkle root is computed over all leaves and signed in the batch header \hyperref[ref:2]{[2]}\hyperref[ref:10]{[10]}\hyperref[ref:30]{[30]}.
 
-\indent ECC\textsubscript{HISE}\_Receiver.verify\textsubscript{and}\_decrypt() validates header signature, Merkle root consistency, per-record signatures, and GCM authentication tags before returning plaintext records. Merkle inclusion proofs are verified for each record during decryption to demonstrate audit capability \hyperref[ref:30]{[30]}.
+\indent ECC\textsubscript{HISE}\_Receiver.verify\textsubscript{and}\_decrypt() validates header signature, Merkle root consistency, per-record signatures, and GCM authentication tags before returning plaintext records. Merkle inclusion proofs are verified for each record during decryption to demonstrate audit capability \hyperref[ref:2]{[2]}\hyperref[ref:30]{[30]}.
 
 \subsection{Settlement API Integration}
 
@@ -150,9 +228,39 @@ Merkle proof verify & Inclusion confirmed & Pass \\
 
 \indent The Merkle tree implementation (merkle.py) uses SHA-256 for internal nodes. Odd-length layers duplicate the last node (Bitcoin-style) to ensure deterministic root computation. Proof generation handles odd-layer promotion with self-pairing. Verification reconstructs the path from leaf to root in O(log n) hashes. For n=100 records, proof length is 7 hashes (224 bytes), enabling compact audit evidence \hyperref[ref:27]{[27]}\hyperref[ref:30]{[30]}\hyperref[ref:31]{[31]}.
 
+\subsection{Envelope Serialization and Versioning}
+
+\indent Envelopes are serialized as structured objects (JSON for the prototype; CBOR or protobuf recommended for production) containing header fields (batch\textsubscript{id}, domain\textsubscript{id}, key\textsubscript{version}, root, timestamp, header\textsubscript{signature}) and an ordered list of record objects (index, ciphertext, iv, tag, signature, metadata). A version byte allows future AEAD or signature algorithm migration without breaking archival verifiers.
+
+\indent Canonical encoding rules matter for signatures: fields are signed over a deterministic byte encoding to avoid JSON key-order ambiguity. The prototype documents this canonicalization in module docstrings; production code should use an explicit encode\textsubscript{for}\_signing() function shared by sender and receiver.
+
+\subsection{Receiver Pipeline and Quarantine}
+
+\indent The receiver pipeline verifies header signature $<<<PH0>>>$ recomputes or checks Merkle root $<<<PH1>>>$ verifies each leaf signature $<<<PH2>>>$ decrypts under index-derived keys $<<<PH3>>>$ posts to ledger adapters. Any stage can quarantine the batch to a dead-letter store with forensic ciphertext retained for incident response \hyperref[ref:30]{[30]}.
+
+\indent Integration tests inject mutated roots, swapped leaves, truncated batches, and wrong-index keys to confirm fail-closed behavior. These tests form part of the evidence that the implementation matches Chapter 3's security claims.
+
+\subsection{Scaling and Parallelism Considerations}
+
+\indent Per-record AES-GCM encryption and Ed25519 signing dominate ECC-HISE latency and parallelize naturally across CPU cores. Merkle tree construction is a barrier after leaves are ready; for large batches, a forest of subtrees with a top-level meta-root can preserve O(log n) proofs while enabling segmented construction \hyperref[ref:2]{[2]}\hyperref[ref:10]{[10]}\hyperref[ref:30]{[30]}.
+
+\indent Memory pressure for million-record national settlement files motivates streaming leaf hashing and spill-to-disk for intermediate layers. The prototype demonstrates correctness at hundreds of records; larger volumes are an engineering path discussed as future work.
+
+\subsection{Key Hierarchy Operational Lifecycle}
+
+\indent MK generation is a ceremony: dual control, audit logging, and backup to offline media or HSM clones. DK\textsubscript{i} rotation is scheduled (e.g., quarterly) and on suspicion of compromise; SK\textsubscript{batch} is single-use per batch\textsubscript{id}. The prototype models this lifecycle with in-memory keys and explicit derive calls; production maps the same labels onto PKCS\#11 derive operations.
+
+\indent Key version identifiers in envelope headers allow receivers to select the correct DK\textsubscript{i} during rotation overlap windows. Old versions remain decrypt-only for a retention period matching archival policy, then are destroyed under dual control. This lifecycle is essential to the hierarchical blast-radius argument of Chapter 3.
+
+\subsection{Interoperability With Existing File-Transfer Rails}
+
+\indent Banks often exchange files over SFTP, MQ, or managed file-transfer products. ECC-HISE envelopes can ride these rails as opaque payloads: transport provides availability and basic encryption, while the envelope provides end-to-end authenticity and Merkle audit independent of the rail. This composition avoids a rip-and-replace of MFT infrastructure \hyperref[ref:30]{[30]}.
+
+\indent Where counterparties cannot yet verify envelopes, a transitional mode can attach a detached Merkle manifest and signature alongside legacy ciphertext, enabling gradual verifier rollout. Full hierarchical encryption becomes mandatory once both sides support the versioned format \hyperref[ref:30]{[30]}.
+
 \section{Integrated System Demonstration}
 
-\indent The integrated demonstration (prototype/api/demo\textsubscript{integration}.py) executes a complete e-banking security workflow: device registration, ECC-DTB-AKA authentication handshake with transaction nonce, and ECC-HISE settlement batch submission with Merkle verification. This end-to-end test validates that both schemes operate correctly within a unified API framework and can be invoked sequentially in a realistic transaction lifecycle \hyperref[ref:30]{[30]}\hyperref[ref:63]{[63]}\hyperref[ref:64]{[64]}.
+\indent The integrated demonstration (prototype/api/demo\textsubscript{integration}.py) executes a complete e-banking security workflow: device registration, ECC-DTB-AKA authentication handshake with transaction nonce, and ECC-HISE settlement batch submission with Merkle verification. This end-to-end test validates that both schemes operate correctly within a unified API framework and can be invoked sequentially in a realistic transaction lifecycle \hyperref[ref:30]{[30]}\hyperref[ref:42]{[42]}\hyperref[ref:43]{[43]}.
 
 \subsection{Deployment Considerations}
 
@@ -168,7 +276,35 @@ Merkle proof verify & Inclusion confirmed & Pass \\
 
 \indent The prototype uses software-based key storage rather than HSM integration. Certificate management is simplified (server public key substituted for full X.509 chain). The settlement API performs sender and receiver verification in-process rather than across network boundaries. Persistent storage uses in-memory dictionaries. These simplifications do not affect the cryptographic correctness of the schemes but must be addressed before production deployment. Formal security proofs remain proof sketches as noted in Chapter 2 \hyperref[ref:4]{[4]}.
 
+\subsection{End-to-End Scenario Walkthrough}
+
+\indent The integrated demo executes: (1) client and bank auth service complete ECC-DTB-AKA; (2) client authorizes a payment under TBK; (3) payment service enqueues a settlement record; (4) settlement sender builds an ECC-HISE batch including that record; (5) counterparty receiver verifies and decrypts; (6) an auditor verifies a Merkle proof for the record against the signed root without receiving unrelated plaintexts \hyperref[ref:30]{[30]}.
+
+\indent This walkthrough demonstrates the dual-layer claim in operational terms: the same payment is protected by device-bound client authentication at initiation and by hierarchical integrity envelopes at inter-bank transfer.
+
+\subsection{Performance Observations in the Integrated Path}
+
+\indent In the prototype environment, ECC-DTB-AKA handshake latency remains sub-millisecond for cryptographic cores, while end-to-end HTTP framing adds the expected milliseconds of stack overhead. ECC-HISE batch build time grows roughly linearly with record count, matching Chapter 3 microbenchmarks. Neither cost dominates a realistic mobile payment UX or overnight settlement window at regional scale.
+
+\indent The principal production risks are not raw crypto speed but key custody, certificate lifecycle, fingerprint policy, and operational monitoring of verification failures---topics treated as deployment considerations rather than cryptographic weaknesses \hyperref[ref:4]{[4]}.
+
+\subsection{Failure Modes and Recovery}
+
+\indent Integrated failure modes include: client handshake timeout (retry with fresh nonces); TBK HMAC mismatch (reject payment, alert fraud); ECC-HISE quarantine (hold settlement, notify operations); and audit proof mismatch (escalate as integrity incident). Recovery never skips verification to restore availability; degraded modes may queue outbound batches offline but do not accept unverified inbound envelopes.
+
+\indent Disaster-recovery drills should include restoring MK from HSM backup ceremonies and re-deriving domain keys under dual control, verifying that archived envelopes remain decryptable under recorded key\textsubscript{version} identifiers.
+
+\subsection{Reproducibility and Artifact Layout}
+
+\indent The repository layout separates protocol modules (prototype/ecc\textsubscript{dtb}\_aka, prototype/ecc\textsubscript{hise}), API glue (prototype/api), and benchmark drivers that emit JSON consumed by Chapters 2--5 tables. Re-running benchmarks regenerates latency and size statistics without editing prose by hand when means are loaded dynamically in content modules.
+
+\indent Deterministic demo scripts print Merkle roots and handshake digests for manual inspection. These artifacts support examination committees and future replicators who wish to confirm that claimed properties are not merely narrative \hyperref[ref:30]{[30]}.
+
 \section{Chapter Summary}
 
 \indent This chapter presented the security system architecture and programmatic implementation of ECC-DTB-AKA and ECC-HISE in a unified e-financial service prototype. Section 4.1 defined four architectural tiers and component interactions. Sections 4.2 and 4.3 detailed module structure, API design, and test results for each scheme. Section 4.4 demonstrated end-to-end integration. Chapter 5 evaluates both schemes comprehensively, reviews prior work, and analyzes effectiveness against the attack mechanisms cataloged in Chapter 1.
+
+\subsection{Implementation Contributions}
+
+\indent Chapter 4 contributes an executable dual-layer prototype, API-level integration patterns, and empirical confirmation that Chapters 2--3 designs are realizable with standard libraries. The artifact supports reproducibility of latency and overhead claims and provides a reference for industrial ports into HSM-backed services.
 

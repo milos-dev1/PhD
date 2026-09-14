@@ -5,13 +5,27 @@
 
 \section{Introduction and Motivation}
 
-\indent Chapter 2 addressed authentication and key-exchange limitations in client-server e-banking channels through ECC-DTB-AKA. This chapter takes a fundamentally different approach, targeting the data-security limitations identified in Section 1.3.3 for server-server communication in electronic banking and electronic finance systems \hyperref[ref:63]{[63]}\hyperref[ref:64]{[64]}.
+\indent Chapter 2 addressed authentication and key-exchange limitations in client-server e-banking channels through ECC-DTB-AKA. This chapter takes a fundamentally different approach, targeting the data-security limitations identified in Section 1.3.3 for server-server communication in electronic banking and electronic finance systems \hyperref[ref:42]{[42]}\hyperref[ref:43]{[43]}.
 
 \indent Inter-bank and intra-bank settlement operations transfer large batches of financial records between server nodes: end-of-day reconciliation files, regulatory reporting payloads, payment clearing batches, and cross-border remittance instructions. These transfers require confidentiality (unauthorized parties must not read records), integrity (any modification must be detectable), non-repudiation (senders cannot deny transmission), and auditability (regulators must verify completeness and ordering without reprocessing entire batches).
 
-\indent Current practice relies on TLS for transport encryption, static pre-shared keys for file encryption, or per-message digital signatures without efficient batch verification. Each approach exhibits limitations cataloged in Section 1.3.3: flat key hierarchies, disconnected encryption and audit subsystems, inefficient batch integrity verification, static PSKs in server-server channels, lack of end-to-end integrity across service boundaries, and regulatory audit friction \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}.
+\indent Current practice relies on TLS for transport encryption, static pre-shared keys for file encryption, or per-message digital signatures without efficient batch verification. Each approach exhibits limitations cataloged in Section 1.3.3: flat key hierarchies, disconnected encryption and audit subsystems, inefficient batch integrity verification, static PSKs in server-server channels, lack of end-to-end integrity across service boundaries, and regulatory audit friction \hyperref[ref:26]{[26]}\hyperref[ref:9]{[9]}\hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}.
 
-\indent ECC-HISE (Elliptic Curve Cryptography --- Hierarchical Integrity-preserving Secure Envelope) proposes a unified methodology combining hierarchical ECC key derivation, AES-256-GCM authenticated encryption, Ed25519 per-record signatures, and Merkle-tree audit chains. The scheme is designed for server-server channels and complements ECC-DTB-AKA, which secures client-server authentication \hyperref[ref:2]{[2]}\hyperref[ref:10]{[10]}\hyperref[ref:11]{[11]}.
+\indent ECC-HISE (Elliptic Curve Cryptography --- Hierarchical Integrity-preserving Secure Envelope) proposes a unified methodology combining hierarchical ECC key derivation, AES-256-GCM authenticated encryption, Ed25519 per-record signatures, and Merkle-tree audit chains. The scheme is designed for server-server channels and complements ECC-DTB-AKA, which secures client-server authentication \hyperref[ref:2]{[2]}\hyperref[ref:36]{[36]}\hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}.
+
+\subsection{Server-Server Threats Beyond Transport Security}
+
+\indent Client-server channels in e-banking have received disproportionate attention in both academic literature and commercial security products. Server-server channels---settlement feeds, clearing-house submissions, card authorization backends, and intra-bank microservice mesh traffic---often rely on mutually authenticated TLS (mTLS) or static file encryption with long-lived pre-shared keys. While mTLS authenticates endpoints and encrypts bytes on the wire, it does not provide persistent integrity once data leaves the TLS session: decrypted payloads may be stored, forwarded, or transformed without cryptographic evidence of origin, completeness, or ordering \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}\hyperref[ref:42]{[42]}\hyperref[ref:43]{[43]}.
+
+\indent Consider an end-of-day settlement batch of n payment records transmitted from Bank A to Bank B. Under mTLS alone, Bank B learns that some TLS peer holding a valid certificate sent a stream of bytes. Bank B cannot, without additional application cryptography, prove to a regulator six months later that record j was present, unmodified, and correctly ordered relative to the batch as a whole. Static PSK file encryption improves confidentiality at rest but typically uses a single key for many batches, creating catastrophic blast radius on key compromise and offering no structured audit proof \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}\hyperref[ref:4]{[4]}.
+
+\indent ECC-HISE addresses this gap by treating each settlement batch as a cryptographic object: hierarchical keys limit exposure; per-record authenticated encryption and signatures provide origin authenticity; a Merkle tree binds records into a tamper-evident set; and a signed batch header carries the Merkle root as a compact, independently verifiable audit commitment \hyperref[ref:36]{[36]}\hyperref[ref:2]{[2]}\hyperref[ref:30]{[30]}.
+
+\subsection{Relationship to Chapter 2 and Dual-Layer Methodology}
+
+\indent The dual-layer methodology of this dissertation pairs ECC-DTB-AKA (Chapter 2) for client-server authentication with ECC-HISE for server-server data protection. The layers are complementary rather than redundant. ECC-DTB-AKA binds a human-facing session to a device and transaction; ECC-HISE binds an institutional batch to a domain key hierarchy and an integrity tree. Both use ECC primitives (ECDH/ECDSA or Ed25519), HKDF domain separation, and explicit adversarial models, enabling unified security reasoning across the e-finance stack \hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}\hyperref[ref:9]{[9]}\hyperref[ref:26]{[26]}.
+
+\indent Importantly, ECC-HISE does not replace mTLS. Transport security remains necessary to protect metadata, thwart passive eavesdropping on network paths, and satisfy baseline compliance controls. ECC-HISE adds an application-layer envelope that survives TLS termination at API gateways, message queues, and archival systems---precisely where Chapter 1 identified integrity gaps \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}.
 
 \section{Design Goals and Requirements}
 
@@ -28,6 +42,22 @@
 \indent G5 (Domain Separation): Retail, corporate, and settlement domains must use cryptographically isolated keys.
 
 \indent G6 (ECC Alignment): Key hierarchy and envelope encryption must use elliptic curve primitives consistent with Chapter 2 and industry standards \hyperref[ref:11]{[11]}\hyperref[ref:34]{[34]}\hyperref[ref:35]{[35]}.
+
+\subsection{Formalization of Integrity and Non-Repudiation Goals}
+
+\indent Beyond the high-level goals stated above, ECC-HISE targets the following precise properties for a batch B = (r\textsubscript{1}, ..., r\textsubscript{n}) produced by sender S for receiver R under domain D:
+
+\indent I1 (Record confidentiality): Without SK\textsubscript{batch} (or ancestor keys that derive it), an adversary learns negligible information about plaintext r\textsubscript{j} from ciphertext\textsubscript{j}.
+
+\indent I2 (Record authenticity): R accepts record j only if an Ed25519 signature under S's signing key verifies over the ciphertext and batch context \hyperref[ref:10]{[10]}.
+
+\indent I3 (Batch binding): Any modification, deletion, insertion, or reordering of records changes the Merkle root with overwhelming probability, causing header verification to fail when the signed root is checked \hyperref[ref:30]{[30]}.
+
+\indent I4 (Selective audit): A third party holding the signed header and a Merkle proof for index j can verify inclusion of ciphertext\textsubscript{j} without receiving the entire batch \hyperref[ref:30]{[30]}.
+
+\indent I5 (Key isolation): Compromise of SK\textsubscript{batch} for one batch does not yield SK\textsubscript{batch}' for another batch under the same domain, assuming HKDF behaves as a PRF \hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}.
+
+\indent These properties map directly to SR5--SR8 from Chapter 1 and to SWIFT CSP-style controls requiring integrity and non-repudiation for high-value payment flows \hyperref[ref:20]{[20]}\hyperref[ref:24]{[24]}.
 
 \section{Hierarchical Key Management}
 
@@ -53,7 +83,21 @@
 
 \subsection{Comparison with Flat Key Management}
 
-\indent Traditional e-banking data encryption deploys a small number of long-lived data-encryption keys (DEKs) wrapped by infrequently rotated key-encryption keys (KEKs). If a DEK is compromised, all data encrypted under that key is exposed---potentially years of settlement records. ECC-HISE's hierarchical derivation limits exposure to a single batch within a single domain. The quantitative overhead of hierarchical derivation (two HKDF operations per batch) is negligible compared to per-record encryption and signing \hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}\hyperref[ref:63]{[63]}.
+\indent Traditional e-banking data encryption deploys a small number of long-lived data-encryption keys (DEKs) wrapped by infrequently rotated key-encryption keys (KEKs). If a DEK is compromised, all data encrypted under that key is exposed---potentially years of settlement records. ECC-HISE's hierarchical derivation limits exposure to a single batch within a single domain. The quantitative overhead of hierarchical derivation (two HKDF operations per batch) is negligible compared to per-record encryption and signing \hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}\hyperref[ref:42]{[42]}\hyperref[ref:43]{[43]}.
+
+\subsection{Threat Analysis of Key Hierarchy Compromise}
+
+\indent Hierarchical keying concentrates risk at higher levels by design: compromise of the master key MK is catastrophic for all domains, while compromise of DK\textsubscript{i} affects only domain i. Operational practice must therefore protect MK in an HSM or equivalent hardware boundary, issue DK\textsubscript{i} under dual control, and rotate domain keys on a defined schedule or after suspected incident.
+
+\indent An adversary who obtains SK\textsubscript{batch} can decrypt and forge within that batch only if they also possess the sender signing key---or if verification is incorrectly implemented to skip signature checks. ECC-HISE deliberately separates confidentiality keys (HKDF-derived) from authenticity keys (Ed25519), so that a confidentiality breach does not automatically yield forgery capability \hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}\hyperref[ref:10]{[10]}.
+
+\indent Revocation proceeds by discontinuing derivation under a compromised DK\textsubscript{i} and re-wrapping subsequent batches under a new domain key. Historical batches remain verifiable using archived headers and the public verification key, even after domain-key rotation, provided signature keys are managed with a documented certificate or key-lifecycle policy \hyperref[ref:4]{[4]}.
+
+\subsection{Domain Separation and Cross-Protocol Safety}
+
+\indent HKDF info labels in ECC-HISE ('ECC-HISE-DK', 'ECC-HISE-SK', 'ECC-HISE-AES') implement cryptographic domain separation: keys derived for one purpose cannot be substituted for another even if salts collide. This practice follows recommendations in the HKDF analysis literature and prevents accidental key reuse between ECC-DTB-AKA transaction keys and ECC-HISE batch keys when both schemes coexist in one institution \hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}.
+
+\indent Salts incorporate domain identifiers and batch identifiers so that identical plaintexts in different domains produce independent keys and ciphertexts. This property supports multi-tenant clearing platforms where logical isolation must be enforced cryptographically, not merely by access-control lists.
 
 \section{Secure Envelope Construction}
 
@@ -61,9 +105,9 @@
 
 \subsection{Record Envelope Algorithm}
 
-\indent For each record r\textsubscript{j} at index j in batch B with batch\textsubscript{id} and session key SK\textsubscript{batch}: (1) Derive K\textsubscript{enc}\_j = HKDF(SK\textsubscript{batch}, salt = str(j), info = 'ECC-HISE-AES', 256). (2) Sample IV\textsubscript{j} $<<<PH6>>>$ \{0,1\}\textasciicircum{}96. (3) ciphertext\textsubscript{j} = AES-256-GCM.Enc(K\textsubscript{enc}\_j, IV\textsubscript{j}, r\textsubscript{j}, AAD = batch\textsubscript{id}). (4) sig\textsubscript{j} = Ed25519.Sign(sk\textsubscript{sender}, H(ciphertext\textsubscript{j} || batch\textsubscript{id} || j)). (5) metadata\textsubscript{j} = JSON(index, batch\textsubscript{id}, timestamp). (6) leaf\textsubscript{j} = H(ciphertext\textsubscript{j} || sig\textsubscript{j} || metadata\textsubscript{j}) \hyperref[ref:2]{[2]}\hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}.
+\indent For each record r\textsubscript{j} at index j in batch B with batch\textsubscript{id} and session key SK\textsubscript{batch}: (1) Derive K\textsubscript{enc}\_j = HKDF(SK\textsubscript{batch}, salt = str(j), info = 'ECC-HISE-AES', 256). (2) Sample IV\textsubscript{j} $<<<PH6>>>$ \{0,1\}\textasciicircum{}96. (3) ciphertext\textsubscript{j} = AES-256-GCM.Enc(K\textsubscript{enc}\_j, IV\textsubscript{j}, r\textsubscript{j}, AAD = batch\textsubscript{id}). (4) sig\textsubscript{j} = Ed25519.Sign(sk\textsubscript{sender}, H(ciphertext\textsubscript{j} || batch\textsubscript{id} || j)). (5) metadata\textsubscript{j} = JSON(index, batch\textsubscript{id}, timestamp). (6) leaf\textsubscript{j} = H(ciphertext\textsubscript{j} || sig\textsubscript{j} || metadata\textsubscript{j}) \hyperref[ref:2]{[2]}\hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}\hyperref[ref:10]{[10]}.
 
-\indent The use of index-derived encryption keys ensures that compromise of K\textsubscript{enc}\_j does not reveal other records in the batch. GCM authenticated encryption provides both confidentiality and integrity at the record level.
+\indent The use of index-derived encryption keys ensures that compromise of K\textsubscript{enc}\_j does not reveal other records in the batch. GCM authenticated encryption provides both confidentiality and integrity at the record level \hyperref[ref:36]{[36]}\hyperref[ref:2]{[2]}.
 
 \subsection{Batch Header and Merkle Root}
 
@@ -91,7 +135,19 @@
 
 \subsection{Deployment in Inter-Bank Settlement}
 
-\indent In a representative deployment, Bank A's settlement server constructs an ECC-HISE batch from end-of-day payment records and transmits the envelope to Bank B's settlement server over mTLS. Bank B verifies the batch header signature, Merkle root, and each record signature before posting to its core banking ledger. The clearing-house authority receives (batch\textsubscript{id}, Root, timestamp) for regulatory archive. This workflow satisfies SWIFT CSP controls for data integrity and non-repudiation while adding cryptographic audit efficiency not present in file-transfer-only approaches \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}\hyperref[ref:20]{[20]}.
+\indent In a representative deployment, Bank A's settlement server constructs an ECC-HISE batch from end-of-day payment records and transmits the envelope to Bank B's settlement server over mTLS. Bank B verifies the batch header signature, Merkle root, and each record signature before posting to its core banking ledger. The clearing-house authority receives (batch\textsubscript{id}, Root, timestamp) for regulatory archive. This workflow satisfies SWIFT CSP controls for data integrity and non-repudiation while adding cryptographic audit efficiency not present in file-transfer-only approaches \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}\hyperref[ref:20]{[20]}\hyperref[ref:24]{[24]}.
+
+\subsection{Why Per-Record Keys and Per-Record Signatures}
+
+\indent Encrypting an entire batch under one AES-GCM key is simpler but couples confidentiality failure modes: a single IV misuse or partial leak can affect all records. Index-derived keys K\textsubscript{enc}\_j = HKDF(SK\textsubscript{batch}, salt=str(j), ...) ensure that compromise of one record key does not decrypt siblings. Combined with unique IVs per record, this design reduces the blast radius of implementation mistakes at the cost of n HKDF expansions---negligible relative to AES-GCM and Ed25519 for typical settlement sizes \hyperref[ref:2]{[2]}\hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}\hyperref[ref:10]{[10]}.
+
+\indent Per-record signatures enable receivers to reject individual malformed records while still validating the batch structure, and they support selective disclosure to auditors. A design using only a single signature over the Merkle root would authenticate the set of ciphertexts but would not bind each ciphertext to the sender independently of the tree; ECC-HISE uses both so that leaf authenticity and set integrity are dual checks \hyperref[ref:30]{[30]}.
+
+\subsection{Failure Modes and Safe Abort Behavior}
+
+\indent Verification must be constant-time with respect to early abort on signature failure where feasible, and must never decrypt before authenticity checks succeed (encrypt-then-sign / sign-over-ciphertext discipline). If the batch header signature fails, the receiver aborts without processing leaves. If the Merkle root mismatches, the receiver aborts even if individual signatures verify---indicating a spliced or reordered set. If a single leaf fails, implementations may quarantine that index while accepting the remainder only when policy explicitly allows partial settlement; the default secure posture is fail-closed for the entire batch \hyperref[ref:30]{[30]}.
+
+\indent Clock skew, duplicate batch\textsubscript{id} replay, and stale domain keys are handled by application policy: batch\textsubscript{id} uniqueness stores, timestamp windows, and key-version fields in the header. ECC-HISE provides the cryptographic substrate; operational replay databases remain necessary, analogous to TLS session ticket tracking \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}.
 
 \section{Security Analysis}
 
@@ -141,9 +197,21 @@ Repudiation & Deny sending batch & High & Sig\textsubscript{header} + per-record
 
 \indent L6 (Audit friction): Resolved --- cryptographic audit chain for regulators.
 
+\subsection{Adversarial Model for Server-Server Channels}
+
+\indent We consider a network adversary who can eavesdrop, drop, delay, inject, and reorder messages on the institutional network, plus a stronger adversary who compromises a receiving host after TLS termination (honest-but-curious gateway). The second adversary models API gateways and message brokers that see plaintext after mTLS decryption---precisely the setting where envelope cryptography is required \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}.
+
+\indent We assume the sender's Ed25519 private key remains uncompromised during batch production, HKDF-SHA-256 behaves as a dual PRF in the usual way, AES-GCM is secure under unique nonces, and SHA-256 is collision-resistant for Merkle tree nodes. Under these assumptions, forging a batch header or substituting a leaf while preserving the signed root is infeasible \hyperref[ref:2]{[2]}\hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}\hyperref[ref:10]{[10]}.
+
+\subsection{Comparison with Sign-Then-Encrypt and CMS Detached Signatures}
+
+\indent Cryptographic Message Syntax (CMS) and related S/MIME profiles can sign and encrypt files, and are used in some banking document exchanges. ECC-HISE differs by (1) hierarchical batch-scoped keys rather than per-message certificate encryption for every record, (2) explicit Merkle audit proofs optimized for selective verification, and (3) index-bound keys that encode ordering into the key schedule. CMS remains valuable for document workflows; ECC-HISE targets high-volume structured settlement batches where audit efficiency and key hierarchy matter \hyperref[ref:4]{[4]}\hyperref[ref:30]{[30]}.
+
+\indent Sign-then-encrypt without a Merkle layer authenticates messages but forces auditors to re-process entire files to confirm membership. Encrypt-then-MAC with a single batch MAC detects modification but does not support compact inclusion proofs. ECC-HISE's combination of AEAD, signatures, and Merkle commitments is chosen specifically for regulatory auditability at scale \hyperref[ref:30]{[30]}.
+
 \section{Effectiveness Analysis and Quantitative Evaluation}
 
-\indent This section presents quantitative evaluation of ECC-HISE against static AES-GCM with pre-shared keys and TLS record-layer-only encryption, using the prototype implementation and benchmark suite (prototype/benchmarks/bench\textsubscript{hise}.py) \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}\hyperref[ref:2]{[2]}.
+\indent This section presents quantitative evaluation of ECC-HISE against static AES-GCM with pre-shared keys and TLS record-layer-only encryption, using the prototype implementation and benchmark suite (prototype/benchmarks/bench\textsubscript{hise}.py) \hyperref[ref:2]{[2]}\hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}.
 
 \subsection{Experimental Setup}
 
@@ -151,7 +219,7 @@ Repudiation & Deny sending batch & High & Sig\textsubscript{header} + per-record
 
 \subsection{Throughput and Latency}
 
-\indent For n = 100 records, ECC-HISE completes batch protect-and-verify in 23.32 ms (mean), compared to 0.22 ms for static AES-GCM PSK and 0.24 ms for TLS record-layer-only encryption. The ECC-HISE premium arises from Ed25519 signing per record, Merkle tree construction, and hierarchical key derivation---operations that baselines omit entirely \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}\hyperref[ref:2]{[2]}.
+\indent For n = 100 records, ECC-HISE completes batch protect-and-verify in 23.32 ms (mean), compared to 0.22 ms for static AES-GCM PSK and 0.24 ms for TLS record-layer-only encryption. The ECC-HISE premium arises from Ed25519 signing per record, Merkle tree construction, and hierarchical key derivation---operations that baselines omit entirely \hyperref[ref:2]{[2]}\hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}\hyperref[ref:10]{[10]}.
 
 \indent For n = 500 records, ECC-HISE requires 245.53 ms, processing approximately 2,040 records per second. This throughput exceeds typical end-of-day settlement batch requirements for regional banks (hundreds to low thousands of records per batch), with horizontal scaling available via parallel batch processing.
 
@@ -163,7 +231,7 @@ Repudiation & Deny sending batch & High & Sig\textsubscript{header} + per-record
 
 \subsection{Storage and Bandwidth Overhead}
 
-\indent For n = 100 records of 256 bytes each (25,600 bytes plaintext), ECC-HISE produces batches averaging 37823 bytes, a 48\% overhead. Static AES-GCM produces 28400 bytes (11\% overhead) without signatures or Merkle audit data. TLS record-layer-only produces 28905 bytes \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}\hyperref[ref:2]{[2]}.
+\indent For n = 100 records of 256 bytes each (25,600 bytes plaintext), ECC-HISE produces batches averaging 37823 bytes, a 48\% overhead. Static AES-GCM produces 28400 bytes (11\% overhead) without signatures or Merkle audit data. TLS record-layer-only produces 28905 bytes \hyperref[ref:2]{[2]}\hyperref[ref:30]{[30]}\hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}.
 
 \indent The additional overhead of ECC-HISE (\textasciitilde{}33\% over static AES-GCM for n=100) purchases per-record non-repudiation, batch-level Merkle audit chain, hierarchical key isolation, and domain-separated key management---properties unavailable in baseline schemes at any overhead \hyperref[ref:2]{[2]}\hyperref[ref:3]{[3]}\hyperref[ref:30]{[30]}.
 
@@ -190,13 +258,33 @@ TLS record only & 0.24 & 28905 & No & No & No \\
 
 \indent Linear scaling in record count dominates ECC-HISE processing time due to per-record encryption and signing. For million-record national settlement files, parallel batch partitioning (multiple ECC-HISE envelopes of 10,000 records each) enables multi-core processing. Merkle roots of sub-batches can themselves form a meta-Merkle tree for hierarchical audit---a straightforward extension not required for regional-bank workloads but available for central-bank scale \hyperref[ref:30]{[30]}.
 
+\subsection{Interpretation of Prototype Measurements}
+
+\indent Prototype benchmarks in this chapter measure cryptographic core costs on commodity hardware without network latency or HSM round-trips. Absolute milliseconds therefore understate production latency but fairly compare relative overhead among ECC-HISE, flat AES-GCM batch encryption, and sign-only baselines. The dominant costs are per-record AEAD and Ed25519 signatures; Merkle hashing is comparatively cheap \hyperref[ref:2]{[2]}\hyperref[ref:10]{[10]}\hyperref[ref:30]{[30]}.
+
+\indent For regional banks with batches of hundreds to thousands of records, ECC-HISE completes well within typical settlement windows. For national switches processing millions of records, the chapter's partitioning strategy---multiple envelopes under a meta-Merkle root---keeps per-envelope latency bounded and enables parallel verification. These engineering projections are consistent with the linear complexity observed in the prototype curves \hyperref[ref:30]{[30]}.
+
+\subsection{Storage Overhead and Archival Economics}
+
+\indent Each record carries ciphertext expansion (GCM tag), an Ed25519 signature (64 bytes), and metadata. The batch header adds a constant-size signature and root. Relative overhead shrinks as average record size grows: for compact payment messages of a few hundred bytes, signature overhead is noticeable; for richer ISO 20022 payloads, it is modest. Institutions already store redundant settlement copies for compliance; replacing one redundant cleartext archive with a cryptographically verifiable envelope archive can improve assurance without proportional storage growth \hyperref[ref:2]{[2]}\hyperref[ref:10]{[10]}.
+
 \section{Comparison with Chapter 2 and Prior Approaches}
 
 \indent ECC-HISE and ECC-DTB-AKA address complementary security layers in e-finance systems. Chapter 2 secures who is communicating and establishes session keys in client-server channels; Chapter 3 secures what data is transferred and provides audit evidence in server-server channels. Together they form the dual-layer ECC methodology of this dissertation.
 
-\indent Compared to ECIES-only encryption, ECC-HISE adds hierarchical keys and Merkle audit. Compared to blockchain-based audit trails, ECC-HISE avoids consensus overhead while providing cryptographic integrity guarantees sufficient for regulated settlement. Compared to TLS-only protection, ECC-HISE provides persistent integrity proofs that survive TLS termination at service boundaries \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}\hyperref[ref:30]{[30]}.
+\indent Compared to ECIES-only encryption, ECC-HISE adds hierarchical keys and Merkle audit. Compared to blockchain-based audit trails, ECC-HISE avoids consensus overhead while providing cryptographic integrity guarantees sufficient for regulated settlement. Compared to TLS-only protection, ECC-HISE provides persistent integrity proofs that survive TLS termination at service boundaries \hyperref[ref:41]{[41]}\hyperref[ref:30]{[30]}\hyperref[ref:31]{[31]}\hyperref[ref:32]{[32]}.
+
+\subsection{Dual-Layer Coverage Matrix}
+
+\indent Table-style reasoning clarifies complementary coverage: session hijacking and device transfer attacks are primarily mitigated by ECC-DTB-AKA; batch tampering, selective record deletion, and post-TLS integrity loss are mitigated by ECC-HISE. Neither scheme alone closes Chapter 1's full gap list. Deploying both yields defense-in-depth with shared ECC/HKDF implementation skills and HSM policies \hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}\hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}.
+
+\indent Prior approaches such as blockchain settlement pilots provide strong shared audit logs but introduce consensus latency, governance complexity, and often weaker confidentiality. ECC-HISE retains bilateral (or multilateral clearing-house) topologies familiar to banks while offering Merkle-style audit commitments without distributed consensus \hyperref[ref:30]{[30]}\hyperref[ref:31]{[31]}\hyperref[ref:32]{[32]}.
 
 \section{Chapter Summary}
 
-\indent This chapter proposed ECC-HISE, a hierarchical integrity-preserving secure envelope for server-server data transfer in e-banking and e-finance systems. The scheme addresses six data-security limitations from Section 1.3.3 through hierarchical ECC key derivation, AES-256-GCM record encryption, Ed25519 signatures, and Merkle-tree audit chains. Security analysis establishes confidentiality, integrity, and audit soundness under standard assumptions. Quantitative evaluation demonstrates 23.32 ms batch processing for 100 records with 37823-byte envelopes, providing audit and non-repudiation capabilities absent in static PSK and TLS-only baselines. Chapter 4 describes the integrated system architecture and programmatic implementation of both ECC-DTB-AKA and ECC-HISE \hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}\hyperref[ref:2]{[2]}.
+\indent This chapter proposed ECC-HISE, a hierarchical integrity-preserving secure envelope for server-server data transfer in e-banking and e-finance systems. The scheme addresses six data-security limitations from Section 1.3.3 through hierarchical ECC key derivation, AES-256-GCM record encryption, Ed25519 signatures, and Merkle-tree audit chains. Security analysis establishes confidentiality, integrity, and audit soundness under standard assumptions. Quantitative evaluation demonstrates 23.32 ms batch processing for 100 records with 37823-byte envelopes, providing audit and non-repudiation capabilities absent in static PSK and TLS-only baselines. Chapter 4 describes the integrated system architecture and programmatic implementation of both ECC-DTB-AKA and ECC-HISE \hyperref[ref:2]{[2]}\hyperref[ref:5]{[5]}\hyperref[ref:6]{[6]}\hyperref[ref:10]{[10]}.
+
+\subsection{Forward Links}
+
+\indent Chapter 4 implements ECC-HISE as executable modules and integrates them with a settlement API alongside ECC-DTB-AKA. Chapter 5 revisits prior work on ECIES, TLS record protection, static PSK encryption, and ledger-based audit, positioning ECC-HISE among these alternatives with quantitative and qualitative comparison \hyperref[ref:41]{[41]}\hyperref[ref:1]{[1]}\hyperref[ref:28]{[28]}.
 

@@ -40,17 +40,8 @@ def render_sections(doc, sections) -> None:
 
 
 def build_sections():
-    import chapter04 as ch4
-    from chapter04_expansion import EXPANSION
-
-    sections = []
-    for section in ch4.SECTIONS:
-        merged = dict(section)
-        extra = [s for e in EXPANSION if e["parent_section"] == section["heading"] for s in e["subsections"]]
-        if extra:
-            merged["subsections"] = list(section.get("subsections", [])) + extra
-        sections.append(merged)
-    return ch4, sections
+    import chapter04 as ch
+    return ch, list(ch.SECTIONS)
 
 
 def generate_chapter04() -> Path:

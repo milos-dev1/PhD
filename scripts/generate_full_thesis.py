@@ -89,18 +89,7 @@ def render_with_figures(doc, sections, figure_map) -> None:
 
 def build_ch1_sections():
     import chapter01 as ch1
-    from phase1_expansion import CHAPTER01_DEEP, CHAPTER01_EXPANSION
-    from phase1_expansion2 import EXTRA_CHAPTER01
-
-    all_exp = CHAPTER01_EXPANSION + CHAPTER01_DEEP + EXTRA_CHAPTER01
-    sections = []
-    for section in ch1.SECTIONS:
-        merged = dict(section)
-        extra = [s for e in all_exp if e["parent_section"] == section["heading"] for s in e["subsections"]]
-        if extra:
-            merged["subsections"] = list(section.get("subsections", [])) + extra
-        sections.append(merged)
-    return ch1, sections
+    return ch1, list(ch1.SECTIONS)
 
 
 def build_full_toc_entries() -> list[tuple[str, str | None, str]]:
@@ -217,7 +206,7 @@ def generate_final_thesis() -> Path:
     doc.add_page_break()
 
     add_heading_bookmarked(doc, conc.TITLE, level=1)
-    render_sections(doc, conc.SECTIONS)
+    render_sections(doc, list(conc.SECTIONS))
     doc.add_page_break()
 
     add_heading_bookmarked(doc, app.TITLE, level=1)

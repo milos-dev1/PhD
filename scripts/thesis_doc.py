@@ -11,6 +11,8 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Mm, Pt, RGBColor
 
+from citations import inject_citations
+
 # ISO B5
 B5_WIDTH = Mm(176)
 B5_HEIGHT = Mm(250)
@@ -18,51 +20,6 @@ BODY_FONT = "Times New Roman"
 BODY_SIZE = Pt(11)
 HEADING_COLOR = RGBColor(0, 0, 0)
 LINK_COLOR = RGBColor(0x05, 0x63, 0xC1)
-
-# Keyword -> reference number(s) for auto-citation when text lacks [n]
-CITATION_KEYWORDS: list[tuple[str, list[int]]] = [
-    ("TLS 1.3", [1]),
-    ("TLS", [1, 28]),
-    ("AES-GCM", [2]),
-    ("AES-256", [2]),
-    ("key management", [3]),
-    ("X.509", [4]),
-    ("certificate", [4]),
-    ("HKDF", [5, 6]),
-    ("authenticated key", [7, 8]),
-    ("ECDSA", [9, 26]),
-    ("Ed25519", [10]),
-    ("EdDSA", [10]),
-    ("elliptic curve", [11, 34, 35]),
-    ("ECDH", [12, 29]),
-    ("OAuth", [13, 14]),
-    ("PKCE", [14]),
-    ("FIDO", [15]),
-    ("WebAuthn", [15]),
-    ("EMV", [16]),
-    ("PCI DSS", [17]),
-    ("PSD2", [18]),
-    ("ISO/IEC 27001", [19]),
-    ("SWIFT", [20, 24]),
-    ("data breach", [21, 22]),
-    ("OWASP", [23]),
-    ("Bangladesh", [24]),
-    ("Carbanak", [25]),
-    ("SHA-256", [27]),
-    ("Merkle", [30]),
-    ("Bitcoin", [31]),
-    ("blockchain", [31, 32]),
-    ("Corda", [32]),
-    ("Diffie-Hellman", [33]),
-    ("post-quantum", [54]),
-    ("Curve25519", [55]),
-    ("ECIES", [56]),
-    ("ProVerif", [66]),
-    ("Tamarin", [65]),
-    ("e-banking", [63, 64]),
-    ("phishing", [22]),
-    ("forward secrecy", [1, 8]),
-]
 
 
 def slugify(text: str) -> str:
@@ -153,28 +110,6 @@ def _add_run(paragraph, text: str, *, bold: bool = False, italic: bool = False, 
     run.font.size = size or BODY_SIZE
     run.bold = bold
     run.italic = italic
-
-
-def inject_citations(text: str) -> str:
-    """Append citation markers for matching keywords if none already present."""
-    if re.search(r"\[\d+", text):
-        return text
-    found: list[int] = []
-    lower = text.lower()
-    for keyword, refs in CITATION_KEYWORDS:
-        if keyword.lower() in lower:
-            for r in refs:
-                if r not in found:
-                    found.append(r)
-            if len(found) >= 3:
-                break
-    if not found:
-        return text
-    cites = "".join(f"[{n}]" for n in found[:3])
-    # Place before final period when possible
-    if text.rstrip().endswith("."):
-        return text.rstrip()[:-1] + f" {cites}."
-    return text.rstrip() + f" {cites}"
 
 
 def add_paragraph_with_citations(

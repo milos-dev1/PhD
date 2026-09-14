@@ -1,0 +1,283 @@
+[
+  {
+    "ref": 1,
+    "ok": true,
+    "file": "01_The_Transport_Layer_Security_TLS_Protocol_Version_1_3.pdf",
+    "url": "http://www.rfc.fr/rfc/en/rfc8446.pdf",
+    "detail": "PDF 228299 bytes"
+  },
+  {
+    "ref": 2,
+    "ok": true,
+    "file": "02_Recommendation_for_Block_Cipher_Modes_of_Operation_Galois_Co.pdf",
+    "detail": "copied from prior download"
+  },
+  {
+    "ref": 3,
+    "ok": true,
+    "file": "03_NIST_SP800-57pt1r5_Key_Management.pdf",
+    "detail": "already present"
+  },
+  {
+    "ref": 4,
+    "ok": true,
+    "file": "04_Internet_X_509_Public_Key_Infrastructure_Certificate_and_CRL.pdf",
+    "detail": "already present"
+  },
+  {
+    "ref": 5,
+    "ok": true,
+    "file": "05_Cryptographic_Extraction_and_Key_Derivation_The_HKDF_Scheme.pdf",
+    "detail": "copied from prior download"
+  },
+  {
+    "ref": 6,
+    "ok": true,
+    "file": "06_HMAC_based_Extract_and_Expand_Key_Derivation_Function_HKDF.pdf",
+    "detail": "copied from prior download"
+  },
+  {
+    "ref": 7,
+    "ok": true,
+    "file": "07_Entity_Authentication_and_Key_Distribution.pdf",
+    "detail": "copied from prior download"
+  },
+  {
+    "ref": 8,
+    "ok": true,
+    "file": "08_Canetti_Krawczyk_Key_Exchange.pdf",
+    "detail": "already present"
+  },
+  {
+    "ref": 9,
+    "ok": true,
+    "file": "09_The_Elliptic_Curve_Digital_Signature_Algorithm_ECDSA.pdf",
+    "detail": "copied from prior download"
+  },
+  {
+    "ref": 10,
+    "ok": true,
+    "file": "10_Edwards_Curve_Digital_Signature_Algorithm_EdDSA.pdf",
+    "detail": "copied from prior download"
+  },
+  {
+    "ref": 11,
+    "ok": true,
+    "file": "11_SEC1_Elliptic_Curve_Cryptography.pdf",
+    "detail": "already present"
+  },
+  {
+    "ref": 12,
+    "ok": false,
+    "skipped": true,
+    "detail": "no open URL / paywalled",
+    "title": "Public Key Cryptography for the Financial Services Industry: Key Agreement Using Diffie-Hellman"
+  },
+  {
+    "ref": 13,
+    "ok": true,
+    "file": "13_The_OAuth_2_0_Authorization_Framework.pdf",
+    "detail": "copied from prior download"
+  },
+  {
+    "ref": 14,
+    "ok": true,
+    "file": "14_RFC8252_OAuth_Native_Apps.pdf",
+    "detail": "already present"
+  },
+  {
+    "ref": 15,
+    "ok": true,
+    "file": "15_W3C_WebAuthn.html",
+    "detail": "already present"
+  },
+  {
+    "ref": 16,
+    "ok": false,
+    "skipped": true,
+    "detail": "no open URL / paywalled",
+    "title": "EMV Integrated Circuit Card Specifications for Payment Systems"
+  },
+  {
+    "ref": 17,
+    "ok": false,
+    "skipped": true,
+    "detail": "no open URL / paywalled",
+    "title": "Payment Card Industry Data Security Standard (PCI DSS)"
+  },
+  {
+    "ref": 18,
+    "ok": false,
+    "skipped": true,
+    "detail": "no open URL / paywalled",
+    "title": "Directive (EU) 2015/2366 on Payment Services (PSD2)"
+  },
+  {
+    "ref": 19,
+    "ok": false,
+    "skipped": true,
+    "detail": "no open URL / paywalled",
+    "title": "Information Security Management Systems \u2014 Requirements"
+  },
+  {
+    "ref": 20,
+    "ok": false,
+    "skipped": true,
+    "detail": "no open URL / paywalled",
+    "title": "Customer Security Programme (CSP) \u2014 Security Controls"
+  },
+  {
+    "ref": 21,
+    "ok": true,
+    "file": "21_Cost_of_a_Data_Breach_Report_2024.html",
+    "detail": "copied from prior download"
+  },
+  {
+    "ref": 22,
+    "ok": true,
+    "file": "22_Data_Breach_Investigations_Report_DBIR_2024.pdf",
+    "detail": "copied from prior download"
+  },
+  {
+    "ref": 23,
+    "ok": true,
+    "file": "23_OWASP_API_Security_Top_10_2023.pdf",
+    "detail": "copied from prior download"
+  },
+  {
+    "ref": 24,
+    "ok": false,
+    "skipped": true,
+    "detail": "no open URL / paywalled",
+    "title": "Report on Cyber Heist Investigation (Bangladesh Bank)"
+  },
+  {
+    "ref": 25,
+    "ok": true,
+    "file": "25_Kaspersky_Carbanak.pdf",
+    "detail": "already present"
+  },
+  {
+    "ref": 26,
+    "ok": true,
+    "file": "26_FIPS186-5_Digital_Signatures.pdf",
+    "detail": "already present"
+  },
+  {
+    "ref": 27,
+    "ok": true,
+    "file": "27_Secure_Hash_Standard_SHS.pdf",
+    "detail": "copied from prior download"
+  },
+  {
+    "ref": 28,
+    "ok": true,
+    "file": "28_Guidelines_for_the_Selection_Configuration_and_Use_of_TLS_Im.pdf",
+    "detail": "already present"
+  },
+  {
+    "ref": 29,
+    "ok": true,
+    "file": "29_NIST_SP800-56Ar3_Key_Establishment.pdf",
+    "detail": "already present"
+  },
+  {
+    "ref": 30,
+    "ok": true,
+    "file": "30_Merkle_Digital_Signature_CRYPTO1987.pdf",
+    "detail": "already present"
+  },
+  {
+    "ref": 31,
+    "ok": true,
+    "file": "31_Bitcoin_A_Peer_to_Peer_Electronic_Cash_System.pdf",
+    "detail": "copied from prior download"
+  },
+  {
+    "ref": 32,
+    "ok": true,
+    "file": "32_Corda_Introduction.pdf",
+    "detail": "already present"
+  },
+  {
+    "ref": 33,
+    "ok": true,
+    "file": "33_Diffie_Hellman_New_Directions.pdf",
+    "detail": "already present"
+  },
+  {
+    "ref": 34,
+    "ok": true,
+    "file": "34_Miller_Elliptic_Curves_CRYPTO1985.pdf",
+    "detail": "already present"
+  },
+  {
+    "ref": 35,
+    "ok": true,
+    "file": "35_Koblitz_Elliptic_Curve_Cryptosystems.pdf",
+    "detail": "already present"
+  },
+  {
+    "ref": 36,
+    "ok": true,
+    "file": "36_Authenticated_Encryption_Relations_among_Notions_and_Analysi.pdf",
+    "detail": "already present"
+  },
+  {
+    "ref": 37,
+    "ok": true,
+    "file": "37_On_the_Security_of_Public_Key_Protocols.pdf",
+    "detail": "copied from prior download"
+  },
+  {
+    "ref": 38,
+    "ok": true,
+    "file": "38_Open_Banking_Standard_Security_Profile.html",
+    "detail": "copied from prior download"
+  },
+  {
+    "ref": 39,
+    "ok": true,
+    "file": "39_Post_Quantum_Cryptography_Standardization.pdf",
+    "detail": "copied from prior download"
+  },
+  {
+    "ref": 40,
+    "ok": true,
+    "file": "40_Bernstein_Curve25519.pdf",
+    "detail": "already present"
+  },
+  {
+    "ref": 41,
+    "ok": false,
+    "skipped": true,
+    "detail": "no open URL / paywalled",
+    "title": "IEEE Standard Specifications for Public-Key Cryptography \u2014 Amendment 1: ECIES"
+  },
+  {
+    "ref": 42,
+    "ok": false,
+    "skipped": true,
+    "detail": "no open URL / paywalled",
+    "title": "A Comprehensive Survey on Electronic Banking Security"
+  },
+  {
+    "ref": 43,
+    "ok": false,
+    "skipped": true,
+    "detail": "no open URL / paywalled",
+    "title": "Online Banking Security Measures and Vulnerabilities"
+  },
+  {
+    "ref": 44,
+    "ok": true,
+    "file": "44_The_TAMARIN_Prover_for_the_Symbolic_Analysis_of_Security_Pro.pdf",
+    "detail": "copied from prior download"
+  },
+  {
+    "ref": 45,
+    "ok": true,
+    "file": "45_Blanchet_ProVerif.pdf",
+    "detail": "already present"
+  }
+]

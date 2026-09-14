@@ -217,10 +217,8 @@ def generate_preface() -> Path:
 
 def generate_chapter01() -> Path:
     import chapter01 as ch1
-    from phase1_expansion import CHAPTER01_DEEP, CHAPTER01_EXPANSION
-    from phase1_expansion2 import EXTRA_CHAPTER01
 
-    sections = merge_expansions(ch1.SECTIONS, CHAPTER01_EXPANSION + CHAPTER01_DEEP + EXTRA_CHAPTER01)
+    sections = list(ch1.SECTIONS)
     body = (
         rf"\noindent\textit{{{escape_latex(ch1.CHAPTER_SUBTITLE)}}}\par\vspace{{1em}}" + "\n\n"
         + render_sections(sections, figure_map=fig_map(FIGURE_MAP_CH1))
@@ -236,10 +234,8 @@ def generate_chapter01() -> Path:
 
 def generate_chapter02() -> Path:
     import chapter02 as ch2
-    from chapter02_expansion import EXPANSION
-    from chapter02_expansion2 import EXPANSION2
 
-    sections = merge_expansions(ch2.SECTIONS, EXPANSION + EXPANSION2)
+    sections = list(ch2.SECTIONS)
     body = (
         rf"\noindent\textit{{{escape_latex(ch2.CHAPTER_SUBTITLE)}}}\par\vspace{{1em}}" + "\n\n"
         + render_sections(sections, figure_map=fig_map(FIGURE_MAP_CH2))
@@ -255,9 +251,8 @@ def generate_chapter02() -> Path:
 
 def generate_chapter03() -> Path:
     import chapter03 as ch3
-    from chapter03_expansion import EXPANSION, EXPANSION2
 
-    sections = merge_expansions(ch3.SECTIONS, EXPANSION + EXPANSION2)
+    sections = list(ch3.SECTIONS)
     body = (
         rf"\noindent\textit{{{escape_latex(ch3.CHAPTER_SUBTITLE)}}}\par\vspace{{1em}}" + "\n\n"
         + render_sections(sections, figure_map=fig_map(FIGURE_MAP_CH3))
@@ -273,9 +268,8 @@ def generate_chapter03() -> Path:
 
 def generate_chapter04() -> Path:
     import chapter04 as ch4
-    from chapter04_expansion import EXPANSION
 
-    sections = merge_expansions(ch4.SECTIONS, EXPANSION)
+    sections = list(ch4.SECTIONS)
     body = (
         rf"\noindent\textit{{{escape_latex(ch4.CHAPTER_SUBTITLE)}}}\par\vspace{{1em}}" + "\n\n"
         + render_sections(sections, figure_map=fig_map(FIGURE_MAP_CH4))
@@ -291,9 +285,8 @@ def generate_chapter04() -> Path:
 
 def generate_chapter05() -> Path:
     import chapter05 as ch5
-    from chapter05_expansion import EXPANSION
 
-    sections = merge_expansions(ch5.SECTIONS, EXPANSION)
+    sections = list(ch5.SECTIONS)
     body = (
         rf"\noindent\textit{{{escape_latex(ch5.CHAPTER_SUBTITLE)}}}\par\vspace{{1em}}" + "\n\n"
         + render_sections(sections, figure_map=fig_map(FIGURE_MAP_CH5))
@@ -310,7 +303,7 @@ def generate_chapter05() -> Path:
 def generate_conclusions() -> Path:
     import conclusions as conc
 
-    body = render_sections(conc.SECTIONS)
+    body = render_sections(list(conc.SECTIONS))
     content = (
         r"\chapter*{Conclusions}" + "\n"
         r"\addcontentsline{toc}{chapter}{Conclusions}" + "\n"
