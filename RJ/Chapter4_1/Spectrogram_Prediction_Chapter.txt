@@ -1,0 +1,1727 @@
+Long-Horizon Vibration Spectrogram Forecasting
+with Convolutional LSTM and Iterative
+Next-Window Rollout
+
+Standalone Methodological Chapter
+(Spectrogram Prediction Project  ConvLSTM Edition)
+
+Contents
+
+1
+
+ConvLSTM-Based Iterative Spectrogram Prediction for Long-Horizon
+Vibration Forecasting
+
+5
+
+1.1
+
+Motivation and Scope . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+5
+
+1.2
+
+Method Overview: Eight Steps
+
+. . . . . . . . . . . . . . . . . . . . . . . .
+
+6
+
+1.3
+
+Principles Behind the Approach . . . . . . . . . . . . . . . . . . . . . . . .
+
+7
+
+1.4
+
+Step 1  Major Windows of Vibration . . . . . . . . . . . . . . . . . . . .
+
+8
+
+1.5
+
+Step 2  Subwindows and Short-Time FFT
+
+8
+
+1.6
+
+Step 3  Build Log-Magnitude Spectrogram St
+
+. . . . . . . . . . . . . . .
+
+9
+
+1.7
+
+Step 4  Context Buer of Recent Spectrograms
+
+. . . . . . . . . . . . . .
+
+10
+
+1.8
+
+Step 5  The ConvLSTM One-Step Predictor . . . . . . . . . . . . . . . .
+
+11
+
+1.8.1
+
+Why ConvLSTM (Single Chosen Architecture) . . . . . . . . . . . .
+
+11
+
+1.8.2
+
+From Vanilla LSTM to ConvLSTM . . . . . . . . . . . . . . . . . .
+
+11
+
+1.8.3
+
+ConvLSTM Gate Equations
+
+. . . . . . . . . . . . . . . . . . . . . .
+
+12
+
+1.8.4
+
+Tensor Shapes Through the Cell . . . . . . . . . . . . . . . . . . . .
+
+12
+
+1.8.5
+
+Full Network Used in This Chapter . . . . . . . . . . . . . . . . . .
+
+13
+
+1.8.6
+
+Forward Pass in Words . . . . . . . . . . . . . . . . . . . . . . . . .
+
+15
+
+1.9
+
+Step 6  One-Step Loss and Training
+
+. . . . . . . . . . . . . . . . .
+
+. . . . . . . . . . . . . . . . . . . .
+
+15
+
+Scheduled Sampling Formula . . . . . . . . . . . . . . . . . . . . . .
+
+16
+
+1.10 Step 7  Iterative Feedback (The Long-Horizon Mechanism) . . . . . . . .
+
+17
+
+1.10.1 Horizon Length in Wall-Clock Time . . . . . . . . . . . . . . . . . .
+
+17
+
+1.9.1
+
+1.11 Step 8  Long-Horizon Outputs and Monitoring
+
+. . . . . . . . . . . . . .
+
+19
+
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+19
+
+1.13 Algorithms . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+19
+
+1.12 End-to-End Flowchart
+
+1
+
+1.13.1 Spectrogram extraction . . . . . . . . . . . . . . . . . . . . . . . . .
+
+19
+
+1.13.2 Train ConvLSTM (one-step) . . . . . . . . . . . . . . . . . . . . . .
+
+20
+
+1.13.3 Iterative long-horizon inference
+
+. . . . . . . . . . . . . . . . . . . .
+
+20
+
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+20
+
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+21
+
+1.16 What Was Deliberately Not Chosen . . . . . . . . . . . . . . . . . . . . . .
+
+21
+
+1.17 Practical Deployment Modes . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+21
+
+1.14 Evaluation Metrics
+1.15 Complexity
+
+1.17.1 Drift Control Strategies
+1.18 Worked Numerical Example
+
+. . . . . . . . . . . . . . . . . . . . . . . .
+
+22
+
+. . . . . . . . . . . . . . . . . . . . . . . . . .
+
+22
+
+1.18.1 Minute-by-Minute Trace of the Feedback Buer
+
+. . . . . . . . . . .
+
+23
+
+1.18.2 Multi-Sensor Notes . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+23
+
+1.19 Chapter Summary
+
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+A Notation and Quick Reference
+A.1
+
+23
+
+24
+
+FormulaReason Index . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+2
+
+24
+
+List of Figures
+
+1.1
+
+Eight-step ConvLSTM spectrogram forecasting pipeline with iterative feedback. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+1.2
+
+Iterative long-horizon forecasting loop:
+
+6
+
+predict next window, feed back,
+
+repeat. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+7
+
+1.3
+
+Major window with overlapping STFT subwindows. . . . . . . . . . . . . .
+
+9
+
+1.4
+
+Current and next waveforms with their spectrograms (one-step target pair).
+
+10
+
+1.5
+
+ConvLSTM cell: convolutional gates and map-shaped memory. . . . . . . .
+
+13
+
+1.6
+
+Sequence-to-one flow: context spectrograms through ConvLSTM to Ŝt+1 .
+
+.
+
+13
+
+1.7
+
+Illustrative chain of true vs. iteratively predicted spectrograms over several
+steps. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+18
+
+Operational flowchart for iterative ConvLSTM spectrogram forecasting. . .
+
+20
+
+1.8
+
+3
+
+List of Tables
+
+1.1
+
+Major-window parameters and reasons. . . . . . . . . . . . . . . . . . . . .
+
+8
+
+1.2
+
+Context-buer settings. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+11
+
+1.3
+
+ConvLSTM spectrogram predictor configuration. . . . . . . . . . . . . . . .
+
+14
+
+1.4
+
+Training hyperparameters. . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+16
+
+1.5
+
+Iteration count H versus wall-clock horizon.
+
+. . . . . . . . . . . . . . . . .
+
+18
+
+A.1
+
+Notation.
+
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+24
+
+A.2
+
+Core formulas and why they were chosen. . . . . . . . . . . . . . . . . . . .
+
+25
+
+4
+
+Chapter 1
+
+ConvLSTM-Based Iterative
+Spectrogram Prediction for
+Long-Horizon Vibration Forecasting
+
+This chapter specifies a complete method for predicting future vibration spectrograms over long horizons (up to days) without attempting to jump days in
+a single network call. A major window of vibration is converted to a spectrogram by overlapping subwindow FFTs. A convolutional long short-term
+memory network (ConvLSTM) consumes a short context of recent spectrograms and predicts the next spectrogram only. That prediction is fed back as
+context, and the same one-step model is applied again and again. Many such
+loops compose a long-horizon forecast. Every step, formula, diagram, and design choice is explained in detail. This document belongs to the standalone
+spectrogram_prediction project and does not modify the main doctoral the-
+
+sis files.
+
+1.1
+
+Motivation and Scope
+
+Industrial monitoring often needs awareness not only of the next few seconds but of
+how spectral signatures may evolve over much longer periods. A single neural network
+
+5
+
+that directly outputs the spectrogram three days from now is poorly posed: operating
+conditions change, and uncertainty explodes. A more controllable principle is:
+
+1. learn a reliable one-step map from recent spectrograms to the next spectrogram;
+
+2.
+
+iterate that map: predict, append, predict again;
+
+3. obtain a long horizon as the product of many short, physically meaningful steps.
+
+This chapter adopts that principle with one architecture only: ConvLSTM. ConvLSTM extends LSTM by replacing gate matrix multiplications with convolutions, so the
+hidden state remains a timefrequency feature mapexactly the geometry of a spectrogram.
+
+1.2
+
+Method Overview: Eight Steps
+Step 1
+Major windows
+Step 6
+Output
+Ŝt+1
+
+Step 2
+Subwindow
+STFT
+
+Step 3
+Spectrogram
+
+Step 5
+ConvLSTM
+one-step
+
+Step 4
+Context
+buer
+
+Step 7
+Feedback
+iterate
+
+Step 8
+Long horizon
+H steps
+
+St
+
+Figure 1.1: Eight-step ConvLSTM spectrogram forecasting pipeline with iterative feedback.
+
+Figure 1.2 shows the same idea as an operational loop: the model never skips to
+day-scale outputs in one shot; day-scale coverage is many next-window cycles.
+
+6
+
+Iterative long-horizon forecasting: predict next window, feed back, repeat
+
+Predict
+
+Past windows
+S_{t-k} ... S_t
+
+ConvLSTM
+encoder-decoder
+
+Ŝ_{t+1}
+
+Repeat until
+horizon H
+
+Shift window
+(t ← t+1)
+
+Append to
+context buffer
+
+feedback
+loop
+
+Figure 1.2: Iterative long-horizon forecasting loop: predict next window, feed back, repeat.
+
+1.3
+
+Principles Behind the Approach
+
+Principle P1  Predict locally, accumulate globally.
+
+One step equals one major
+
+window (default 2 s). A day contains
+
+Hday =
+
+24 × 3600
+86400
+=
+= 43200
+Tw
+2
+
+(1.1)
+
+one-step predictions if windows tile without overlap. The long horizon is H iterations of
+the same learned map, not a dierent model.
+
+Why this principle?
+
+It keeps the learning target statistically related to the input:
+
+consecutive spectrograms share physical continuity.
+
+Directly regressing a spectrogram
+
+43200 windows ahead would require the network to invent unconstrained future operating
+regimes.
+
+Principle P2  Keep timefrequency geometry inside the memory.
+
+Standard
+
+LSTM flattens images into vectors and destroys locality. ConvLSTM keeps maps, so a
+bearing ridge remains a spatially coherent pattern in the cell state.
+
+Principle P3  Separate signal processing from forecasting.
+
+STFT spectrogram
+
+construction is classical and auditable. ConvLSTM only sees normalized spectrograms.
+Engineers can inspect St without opening the network.
+
+7
+
+Principle P4  Train one-step, deploy multi-step.
+
+Training uses teacher forcing
+
+on true past windows when possible. Deployment for long horizons uses closed-loop rollout
+with predicted windows fed back. Scheduled sampling can bridge the gap during training.
+
+1.4
+
+Step 1  Major Windows of Vibration
+
+Sample rate fs , major duration Tw , length
+
+Nw = fs Tw .
+
+(1.2)
+
+
+x(t) = x[n0 ], . . . , x[n0 + Nw − 1] .
+
+(1.3)
+
+Window t is
+
+Default: fs = 1200 Hz, Tw = 2 s, Nw = 2400, major hop Nw (non-overlapping tiling).
+
+Table 1.1: Major-window parameters and reasons.
+
+Parameter
+
+Default
+
+Why
+
+fs
+
+1200 Hz
+
+Matches multi-sensor acquisition used
+in the research programme
+
+Tw
+
+2s
+
+Short
+
+enough
+
+for
+
+one-step
+
+learning;
+
+long enough for spectral content
+Major hop
+
+Nw
+
+Clean present/next pairing for iterative
+rollout
+
+Why non-overlapping major hops for long rollout?
+
+Overlapping majors blur the
+
+meaning of next. For iterative day-scale forecasting, a clean tiling makes H count wallclock time directly via Equation (1.1).
+
+1.5
+
+Step 2  Subwindows and Short-Time FFT
+
+Inside x
+
+(t)
+
+, take subwindows of length L = fs Ts with hop Hstft :
+
+
+x(t,m) = x[n0 + mHstft ], . . . , x[n0 + mHstft + L − 1] .
+8
+
+(1.4)
+
+Frame count:
+
+
+
+
+Nw − L
+M =1+
+.
+Hstft
+
+(1.5)
+
+Apply Hann window
+
+
+
+2πn
+w[n] = 0.5 − 0.5 cos
+L−1
+then the STFT
+
+X[m, k] =
+
+L−1
+X
+
+
+,
+
+(1.6)
+
+x[n + mHstft ] w[n] e−j2πkn/L .
+
+(1.7)
+
+n=0
+
+Why STFT (not wavelets) here?
+
+Uniform ∆f = fs /L maps cleanly to shaft orders
+
+Defaults Ts
+
+= 0.25 s, L = 300, Hstft = 150 give M = 15 and
+
+and defect frequencies.
+
+∆f = 4 Hz.
+
+Major window with overlapping STFT subwindows
+Acceleration (a.u.)
+
+1.5
+1.0
+0.5
+0.0
+
+−0.5
+−1.0
+−1.5
+0.00
+
+0.25
+
+0.50
+
+0.75
+
+1.00
+
+Time (s)
+
+1.25
+
+1.50
+
+1.75
+
+2.00
+
+Figure 1.3: Major window with overlapping STFT subwindows.
+
+1.6
+
+Step 3  Build Log-Magnitude Spectrogram St
+
+(St )[m, k] = log 1 + |X[m, k]| ,
+
+St ∈ RM ×F
+
+(1.8)
+
+with bins retained up to fmax = 512 Hz (F = 129 for the defaults).
+
+Why log(1 + |X|)?
+
+Compresses dynamic range, stabilizes learning, avoids log 0, and
+
+discards unstable absolute phase. Multi-sensor data use shape (C, M, F ).
+
+Why identical shapes for St and St+1 ?
+
+Iterative feedback requires every prediction
+
+to be a valid next input. Same (C, M, F ) is mandatory.
+
+9
+
+From waveforms to consecutive spectrograms
+Current window x(t)
+Next window x(t+1)
+1.5
+1.0
+0.5
+0.0
+
+−0.5
+−1.0
+−1.5
+0.00 0.25 0.50 0.75 1.00 1.25 1.50 1.75 2.00
+
+Spectrogram S_t
+
+500
+
+2.0
+1.5
+1.0
+0.5
+0.0
+−0.5
+−1.0
+−1.5
+−2.0
+
+2.00 2.25 2.50 2.75 3.00 3.25 3.50 3.75 4.00
+
+Spectrogram S_{t+1} 4
+
+500
+
+3
+
+400
+
+300
+
+300
+
+2
+
+200
+
+200
+
+1
+
+100
+
+100
+
+Hz
+
+400
+
+0
+
+0.2
+
+0.4
+
+0.6
+
+0.8
+
+1.0
+
+1.2
+
+1.4
+
+1.6
+
+1.8
+
+0
+
+0.2
+
+0.4
+
+0.6
+
+0.8
+
+1.0
+
+1.2
+
+1.4
+
+1.6
+
+1.8
+
+Figure 1.4: Current and next waveforms with their spectrograms (one-step target pair).
+
+1.7
+
+Step 4  Context Buer of Recent Spectrograms
+
+ConvLSTM is a sequence model. Define context length k (default k = 3):
+
+
+Ut = St−k+1 , . . . , St−1 , St ∈ Rk×C×M ×F .
+
+(1.9)
+
+At cold start, pad with repeats of the first available spectrogram or wait until k windows
+exist.
+
+Why a context of several windows, not one?
+
+One spectrogram shows the present;
+
+a short history shows the trend (e.g., a ridge brightening across windows). ConvLSTM
+memory needs a sequence axis.
+
+k = 35 is a practical compromise between history and
+
+delay/compute.
+
+10
+
+Table 1.2: Context-buer settings.
+
+Item
+
+Default
+
+Why
+
+Context length k
+
+3
+
+Enough to see short trends; small latency
+
+Buer policy
+
+FIFO
+
+Drop oldest when appending Ŝt+1
+
+Missing past
+
+repeat S0
+
+Simple warm-start without inventing
+dynamics
+
+1.8
+
+Step 5  The ConvLSTM One-Step Predictor
+
+1.8.1 Why ConvLSTM (Single Chosen Architecture)
+This chapter does not oer a menu of networks.
+
+ConvLSTM is the adopted model
+
+because:
+
+1. spectrograms are spatiotemporal maps;
+
+2. long-horizon use needs memory of recent evolution;
+
+3. iterative rollout needs a stable one-step sequence predictor;
+
+4. convolutions preserve local harmonic structure inside the memory cell.
+
+1.8.2 From Vanilla LSTM to ConvLSTM
+A vanilla LSTM gate has the algebraic form
+
+it = σ(Wxi xt + Whi ht−1 + bi ),
+
+(1.10)
+
+where xt and ht−1 are vectors and W(·) are dense matrices. If xt were a vectorized spectrogram, Wxi xt would mix every frequency bin with every other bin on every step, destroying
+locality and exploding parameter count. ConvLSTM replaces those products by convolutions:
+
+Wxi xt −→ Wxi ∗ Xt ,
+
+(1.11)
+
+so each output location depends only on a local neighborhood in timefrequency. That is
+the decisive reason ConvLSTM is used on spectrograms.
+
+11
+
+1.8.3 ConvLSTM Gate Equations
+Let
+
+∗ denote convolution and ⊙ elementwise multiplication.
+
+For input tensor
+
+Xt (a
+
+spectrogram or encoder feature map) and previous states (Ht−1 , Ct−1 ):
+
+it = σ(Wxi ∗ Xt + Whi ∗ Ht−1 + bi ),
+
+(1.12)
+
+ft = σ(Wxf ∗ Xt + Whf ∗ Ht−1 + bf ),
+
+(1.13)
+
+ot = σ(Wxo ∗ Xt + Who ∗ Ht−1 + bo ),
+
+(1.14)
+
+gt = tanh(Wxg ∗ Xt + Whg ∗ Ht−1 + bg ),
+
+(1.15)
+
+Ct = ft ⊙ Ct−1 + it ⊙ gt ,
+
+(1.16)
+
+Ht = ot ⊙ tanh(Ct ).
+
+(1.17)
+
+Gate-by-gate meaning for vibration spectrograms.
+
+ Forget gate ft : can keep a persistent shaft harmonic ridge in Ct−1 across windows.
+ Input gate it and candidate gt : can write a strengthening defect tone near a
+known band into memory.
+
+ Output gate ot : exposes the parts of memory needed to paint Ŝt+1 .
+Why σ and tanh?
+
+They are the classical bounded nonlinearities that keep gated mem-
+
+ory stable. Replacing them is unnecessary for this task and would obscure comparison
+with the ConvLSTM literature.
+
+1.8.4 Tensor Shapes Through the Cell
+′
+′
+For a single sensor after the stem, a typical shape is (B, 64, M , F ) at each sequence
+step, where M
+
+′
+
+≤ M and F ′ ≤ F if mild pooling is used. Defaults in this chapter keep
+
+M ′ = M = 15 and F ′ = F = 129 inside ConvLSTM (no pooling) so that skip-free
+decoding stays aligned. Parameter count then scales with kernel size and channel width,
+not with M · F dense connections.
+
+12
+
+ConvLSTM replaces matrix multiplies in LSTM gates with convolutions
+One ConvLSTM cell (gates use convolution *)
+
+X_t
+spectrogram
+frame/tensor
+
+i_t
+input
+gate
+σ/tanh + *
+
+f_t
+forget
+gate
+σ/tanh + *
+
+o_t
+output
+gate
+σ/tanh + *
+
+g_t
+cell
+candidate
+σ/tanh + *
+
+H_{t-1}
+hidden
+C_t update
+C_t = f⊙C + i⊙g
+
+C_{t-1}
+cell
+
+H_t = o ⊙ tanh(C_t)
+
+Figure 1.5: ConvLSTM cell: convolutional gates and map-shaped memory.
+
+1.8.5 Full Network Used in This Chapter
+Ŝt+1 = Dψ (ConvLSTMϕ (Ut )) .
+
+(1.18)
+
+Concrete stack:
+
+Sequence-to-one ConvLSTM: context spectrograms → next spectrogram
+
+S(t-2)
+
+S(t-1)
+
+S(t)
+
+ConvLSTM
+step
+
+ConvLSTM
+step
+
+ConvLSTM
+step
+
+Decoder
+Conv head
+
+Ŝ(t+1)
+
+state H,C
+
+Figure 1.6: Sequence-to-one flow: context spectrograms through ConvLSTM to Ŝt+1 .
+
+Why sequence-to-one rather than sequence-to-sequence inside one call?
+
+The
+
+long-horizon strategy is iterative one-step rollout. Training and deployment then share
+the same interface:
+
+always predict exactly one next window.
+
+Multi-output heads are
+
+optional extensions; they are not required by the chapter's principle.
+
+13
+
+Table 1.3: ConvLSTM spectrogram predictor configuration.
+
+Stage
+
+Shape / width
+
+Role / reason
+
+Input sequence
+
+(k, C, M, F )
+
+Context spectrograms
+
+default
+
+(3, 1, 15, 129)
+Conv stem
+
+3 × 3, 32 channels
+
+Local ridge/edge features before recurrence
+
+64 channels, 3 × 3 ker-
+
+Spatiotemporal memory (pri-
+
+nels
+
+mary)
+
+ConvLSTM-2
+
+64 channels
+
+Deeper temporal abstraction
+
+Conv decoder
+
+32 → C channels
+
+Reconstruct next spectrogram
+
+Output
+
+(C, M, F )
+
+Same shape as one St for feed-
+
+ConvLSTM-1
+
+back
+Activation
+
+ReLU
+
+Standard stable choices
+
+(stem/decoder),
+gates
+
+as
+
+in
+
+(1.12)
+
+(1.17)
+
+14
+
+Why two ConvLSTM layers?
+
+One layer often underfits cross-window trends; deeper
+
+than two rarely helps for k ≈ 3 and increases rollout drift.
+
+Two layers are the default
+
+compromise.
+
+Why a convolutional stem before ConvLSTM?
+
+Raw log-spectrograms mix sensor
+
+noise with structure. A shallow stem computes local edge-like responses (harmonic lines,
+bursts) so the recurrent memory stores features rather than raw pixels. This improves
+one-step MSE in practice and is cheap.
+
+1.8.6 Forward Pass in Words
+1. Stack context Ut = (St−k+1 , . . . , St ).
+
+2. Apply the shared conv stem to each context element.
+
+3. Run ConvLSTM-1 then ConvLSTM-2 along the k steps; keep final states (H, C).
+
+4. Decode H with conv layers to Ŝt+1 of shape (C, M, F ).
+
+5. (Deploy) FIFO-insert Ŝt+1 into the buer for the next iteration.
+
+1.9
+
+Step 6  One-Step Loss and Training
+
+Normalize spectrograms with training-set mean/variance:
+
+S̃ =
+
+S−µ
+.
+σ
+
+(1.19)
+
+Primary loss (on normalized tensors):
+
+2
+
+L = fθ (Ut ) − St+1 F
+Why MSE?
+
+(1.20)
+
+Optimal predictor is the conditional mean of the next spectrogram given
+
+the context. MSE is stable and matches residual monitoring later.
+Optional band-weighted term on diagnostic bins B :
+
+L = LMSE + γ
+
+X
+
+2
+
+λk (fθ (Ut ) − St+1 )[:, k] 2 .
+
+k∈B
+
+15
+
+(1.21)
+
+Table 1.4: Training hyperparameters.
+
+Item
+
+Default
+
+Why
+
+Optimizer
+
+−3
+Adam, lr 10
+
+Standard for conv/recurrent hybrids
+
+Batch size
+
+816
+
+Sequences
+
+of
+
+spectrograms
+
+are
+
+memory-heavy
+Epochs
+
+100200
+
++
+
+Stop on validation one-step MSE
+
+early stop
+Teacher forcing
+
+yes (train)
+
+Stable learning of one-step map
+
+Scheduled
+
+optional
+
+Reduces train/deploy mismatch for
+
+sam-
+
+pling
+
+Why teacher forcing first?
+
+rollout
+
+During training, feeding true past spectrograms teaches
+
+the correct local dynamics before exposing the model to its own errors. For long rollout
+deployment, scheduled sampling gradually replaces true context entries with predictions
+so the network learns to correct small mistakes.
+
+1.9.1 Scheduled Sampling Formula
+At training step n, with probability pn feed the true spectrogram into the buer, and with
+probability 1 − pn feed the network's own previous prediction:
+
+
+pn = max pmin , p0 · η n ,
+
+(1.22)
+
+with defaults p0 = 1, η = 0.995, pmin = 0.7 for mild closing of the gap (or lower pmin when
+aggressive rollout robustness is required).
+
+Why schedule instead of pure teacher forcing forever?
+
+Pure teacher forcing trains
+
+a model that always sees perfect history; iterative day-scale deployment eventually sees
+imperfect history. Scheduled sampling is the principled bridge.
+
+16
+
+1.10
+
+Step 7  Iterative Feedback (The Long-Horizon
+Mechanism)
+
+At deployment, given an initial buer Ut0 of real spectrograms:
+
+1. Predict Ŝt+1 = fθ (Ut ).
+
+2. Append Ŝt+1 to the buer; drop the oldest entry (FIFO) so length stays k .
+
+3. Set t ← t + 1.
+
+4. Repeat until H future windows are produced.
+
+Formally,
+
+Ŝt+1 = fθ (Ut ),
+
+(1.23)
+
+Ut+1 = St−k+2 , . . . , St , Ŝt+1
+
+
+
+(with predicted tensors after the first step).
+
+(1.24)
+
+After the first prediction, some or all context entries become predictions; after k steps the
+buer is entirely synthetic and the forecast is fully open-loop.
+
+Why FIFO feedback?
+
+It mirrors online operation: time moves forward, the newest
+
+estimate enters memory, the oldest leaves. This is exactly predict the next window, then
+from that predict the next one again.
+
+Why this can reach days without one huge loop body?
+
+Loop here means re-
+
+peating the same cheap one-step inference H times. It is not one unrolled network with
+
+43200 layers. Compute scales as O(H) forward passes.
+
+1.10.1 Horizon Length in Wall-Clock Time
+Thorizon = H · Tw .
+Examples with Tw = 2 s:
+
+17
+
+(1.25)
+
+Long-horizon idea: many next-window steps chained by feeding predictions back
+True S(t+1)
+
+True S(t+2)
+
+True S(t+3)
+
+True S(t+4)
+
+Iterative Ŝ(t+0)
+
+Iterative Ŝ(t+1)
+
+Iterative Ŝ(t+2)
+
+Iterative Ŝ(t+3)
+
+Iterative Ŝ(t+4)
+
+Predicted
+(rollout)
+
+True
+
+True S(t+0)
+
+Figure 1.7: Illustrative chain of true vs. iteratively predicted spectrograms over several
+steps.
+
+Table 1.5: Iteration count H versus wall-clock horizon.
+
+Desired horizon
+
+Iterations H
+
+1 minute
+
+30
+
+1 hour
+
+1,800
+
+12 hours
+
+21,600
+
+1 day
+
+43,200
+
+18
+
+Honest limitation.
+
+Open-loop rollout drifts. For day-scale use, refresh the buer with
+
+real measured spectrograms whenever new data arrive (hybrid: closed-loop while online
+measurements exist; open-loop only across gaps).
+
+Pure open-loop for 43,200 steps is a
+
+stress test, not the only operating mode.
+
+1.11
+
+Step 8  Long-Horizon Outputs and Monitoring
+
+After H iterations the system stores
+
+
+Ŝt+1 , Ŝt+2 , . . . , Ŝt+H .
+
+(1.26)
+
+Derived monitoring signals:
+
+at+h = St+h − Ŝt+h F
+
+(when truth is later observed),
+
+(1.27)
+
+(predicted spectral change).
+
+(1.28)
+
+et+h = Ŝt+h − Ŝt+h−1 F
+Why residual
+
+a?
+
+When reality arrives, large
+
+a means the machine did not follow
+
+historically learned dynamicsan anomaly cue.
+
+Why predicted change e?
+
+Even before truth arrives, a sudden jump in e along the
+
+forecast chain flags an unstable rollout or a rapidly evolving predicted fault ridge.
+
+1.12
+
+End-to-End Flowchart
+
+1.13
+
+Algorithms
+
+1.13.1 Spectrogram extraction
+1. Take x
+
+(t)
+
+of length Nw .
+
+2. For each subwindow: Hann (1.6), FFT (1.7), log(1 + |X|), keep F bins.
+
+3. Stack to St ; normalize with (1.19).
+
+19
+
+h←h+1
+
+Acquire window
+
+STFT Steps
+
+x(t)
+
+13 → St
+
+Store prediction
+
+ConvLSTM
+
+Update context
+
+append to buer
+
+predict Ŝt+1
+
+buer Ut
+
+yes
+
+t←t+1
+
+h < H?
+
+no
+
+Emit long-horizon
+sequence
+
+Figure 1.8: Operational flowchart for iterative ConvLSTM spectrogram forecasting.
+
+1.13.2 Train ConvLSTM (one-step)
+1. Build samples (Ut , St+1 ) from consecutive real windows.
+
+2. Minimize (1.20) with Adam; optionally scheduled sampling.
+
+3. Early-stop on validation one-step MSE.
+
+1.13.3 Iterative long-horizon inference
+1. Initialize buer with k real spectrograms.
+
+2. For h = 1..H : predict next spectrogram; FIFO-append into buer; store output.
+
+3. Return sequence (1.26).
+
+1.14
+
+Evaluation Metrics
+2
+1 X
+Ŝt+h [m, k] − St+h [m, k] ,
+M F m,k
+1 X
+MAE(h) =
+Ŝt+h [m, k] − St+h [m, k] .
+M F m,k
+MSE(h) =
+
+(1.29)
+
+(1.30)
+
+Report curves of MSE versus horizon h. One-step performance alone is not enough for a
+rollout method: day-scale claims require showing how fast error grows with h.
+
+20
+
+Why horizon-wise curves?
+
+They quantify the trade-o inherent in Principle P1: local
+
+steps are learnable; long open-loop chains drift.
+
+1.15
+
+Complexity
+
+One-step cost Tstep (STFT optional if spectrogram already cached + ConvLSTM forward).
+Long horizon:
+
+Ttotal ≈ H · Tstep .
+
+(1.31)
+
+For H = 43200 and Tstep ≈ 5 ms, order-of-magnitude runtime is a few minutes on GPU
+acceptable as a batch forecast job, not as a synchronous blocking call inside a 2 s acquisition interrupt.
+
+1.16
+
+What Was Deliberately Not Chosen
+
+ Plain CNN encoderdecoder only (SEDNet-style). Excellent for one shot
+from a single spectrogram, weaker at consuming multi-window trends for iterative
+day-scale use.
+
+ Vanilla LSTM on flattened spectrograms. Destroys local frequency structure.
+ Single network outputting a day-ahead spectrogram. Ill-posed under changing loads; not used here.
+
+ Complex STFT prediction.
+
+Phase instability; magnitude suces for energy
+
+evolution.
+
+1.17
+1.
+
+Practical Deployment Modes
+
+Online hybrid: every real window refreshes the buer; ConvLSTM predicts only
+the immediate next window for short lookahead.
+
+2.
+
+Gap filling: if acquisition pauses, iterate open-loop across the gap, then snap back
+when data return.
+
+21
+
+3.
+
+Scenario forecast: run H open-loop steps from the current buer to sketch possible spectral evolution (always labeled as forecast, not measurement).
+
+Why prefer hybrid for days?
+
+Because a day of continuous operation produces a
+
+continuous stream of real windows. The iterative model is then repeatedly re-anchored
+in truth, and long calendar time is covered by many accurate one-step predictions rather
+than one fragile open-loop marathon.
+
+1.17.1 Drift Control Strategies
+Long open-loop chains drift. The chapter therefore standardizes three controls:
+
+1.
+
+Re-anchor period R: every R real windows, reset the buer to measured spectrograms (hybrid mode). Default R = 1 while streaming.
+
+2.
+
+Clamp / denoise predictions: optional mild Gaussian smoothing along frequency
+before re-injection to suppress salt-and-pepper artifacts that explode under feedback.
+
+3.
+
+Horizon-wise validation: reject a configuration if validation MSE(h) exceeds a
+threshold for h ≤ hok (e.g. hok = 30 for one minute).
+
+Why not rely on a deeper network instead of re-anchoring?
+
+Depth does not re-
+
+move uncertainty about future loads and interventions. Re-anchoring uses new measurements
+the only reliable information for day-scale coverage.
+
+1.18
+
+Worked Numerical Example
+
+Defaults:
+
+Tw = 2, k = 3, M = 15, F = 129. Context Ut holds three (1, 15, 129) tensors.
+
+ConvLSTM emits Ŝt+1 of shape (1, 15, 129). For a 1-hour lookahead, H = 1800 iterations.
+For a 1-day lookahead, H = 43200 iterations (Equation (1.1)). In plant operation, hybrid
+mode may still run all day while rarely needing pure open-loop stretches longer than a
+few minutes.
+
+22
+
+1.18.1 Minute-by-Minute Trace of the Feedback Buer
+Suppose k = 3 and the buer at time t is (St−2 , St−1 , St ) (all real). Then:
+
+1. Predict Ŝt+1 .
+
+2. Buer becomes (St−1 , St , Ŝt+1 ).
+
+3. Predict Ŝt+2 .
+
+4. Buer becomes (St , Ŝt+1 , Ŝt+2 ).
+
+5. Predict Ŝt+3 .
+
+6. Buer becomes (Ŝt+1 , Ŝt+2 , Ŝt+3 )  fully open-loop.
+
+From step 6 onward, every context entry is predicted until a real measurement reanchors the buer.
+
+This trace is the exact meaning of not in one loop body, but by
+
+repeating next-window prediction.
+
+1.18.2 Multi-Sensor Notes
+For
+
+C accelerometers, St ∈ RC×M ×F .
+
+The stem convolution mixes channels at each
+
+spatial location, so ConvLSTM memory can represent cross-sensor patterns (e.g., a tone
+appearing first on the drive-end channel). The iterative algorithm is unchanged: only the
+channel dimension C grows.
+
+1.19
+
+Chapter Summary
+
+This chapter replaced single-shot CNN forecasting with a ConvLSTM one-step spectrogram predictor and an iterative feedback loop for long horizons. Vibration windows
+become STFT spectrograms; a context buer of recent spectrograms drives ConvLSTM;
+the predicted next spectrogram is fed back; repeating this process yields minute-to-day
+coverage without a single day-scale output layer. Formulas for STFT, ConvLSTM gates,
+loss, feedback, and horizon length were given with explicit reasons, accompanied by diagrams, flowcharts, and tables.
+
+23
+
+Appendix A
+
+Notation and Quick Reference
+
+Table A.1: Notation.
+
+A.1
+
+Symbol
+
+Meaning
+
+St , Ŝt+1
+
+Spectrogram; predicted next spectrogram
+
+Ut
+
+Context buer of k spectrograms
+
+H
+
+Number of iterative one-step forecasts
+
+it , ft , ot , gt
+
+ConvLSTM gates / candidate
+
+Ht , Ct
+
+Hidden and cell state maps
+
+Thorizon
+
+Wall-clock horizon = HTw
+
+FormulaReason Index
+
+24
+
+Table A.2: Core formulas and why they were chosen.
+
+Formula
+
+Why
+
+Hday (1.1)
+
+Converts days into iteration counts
+
+STFT (1.7)
+
+Interpretable uniform frequency bins
+
+St (1.8)
+
+Learning-stable magnitude image
+
+Context (1.9)
+
+Gives ConvLSTM a temporal sequence
+
+Gates (1.12)(1.17)
+
+Map-shaped memory for spectrograms
+
+Loss (1.20)
+
+One-step conditional-mean training
+
+Feedback (1.24)
+
+Enables long horizon by repetition
+
+Cost (1.31)
+
+Shows compute scales with H , not with a giant
+net
+
+25
+

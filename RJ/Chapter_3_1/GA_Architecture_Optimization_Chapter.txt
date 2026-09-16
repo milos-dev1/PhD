@@ -1,0 +1,1495 @@
+Genetic AlgorithmBased DNN Classifier
+Architecture Optimization
+for Multi-Sensor Vibration Diagnosis
+Standalone Methodological Chapter
+(Three-Section Structure; separate from the main thesis PDF)
+
+Contents
+1 GA-Based DNN Classifier Architecture Optimization
+1.1
+
+1.2
+
+1.3
+
+5
+
+DNN Architecture Representation and Search Space . . . . . . . . . . . . .
+
+5
+
+1.1.1
+
+Motivation: Why Architecture Must Be Searched
+
+. . . . . . . . . .
+
+5
+
+1.1.2
+
+Chromosome Encoding . . . . . . . . . . . . . . . . . . . . . . . . .
+
+6
+
+1.1.3
+
+Search Space Definition . . . . . . . . . . . . . . . . . . . . . . . . .
+
+6
+
+1.1.4
+
+Cardinality: Why Exhaustion Is Impossible
+
+. . . . . . . . . . . . .
+
+7
+
+1.1.5
+
+Parameter-Count Constraint and Repair
+
+. . . . . . . . . . . . . . .
+
+7
+
+1.1.6
+
+Decoding a Chromosome into an MLP
+
+. . . . . . . . . . . . . . . .
+
+8
+
+1.1.7
+
+Section 1 Summary . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+8
+
+GA-Based Architecture Optimization Procedure . . . . . . . . . . . . . . .
+
+9
+
+1.2.1
+
+Why a Genetic Algorithm
+
+9
+
+1.2.2
+
+Step A  Initialize the Population
+
+. . . . . . . . . . . . . . . . . .
+
+10
+
+1.2.3
+
+Step B  Fitness Evaluation (Macro-F1) . . . . . . . . . . . . . . .
+
+11
+
+1.2.4
+
+Step C  Tournament Selection . . . . . . . . . . . . . . . . . . . .
+
+12
+
+1.2.5
+
+Step D  Crossover and Mutation
+
+. . . . . . . . . . . . . . . . . .
+
+13
+
+1.2.6
+
+Step E  Elitism and Replacement . . . . . . . . . . . . . . . . . .
+
+14
+
+1.2.7
+
+Step F  Termination and Best Architecture
+
+. . . . . . . . . . . .
+
+14
+
+1.2.8
+
+Worked Numerical Crossover Trace
+
+. . . . . . . . . . . . . . . . . .
+
+15
+
+1.2.9
+
+Main GA Loop
+
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+15
+
+1.2.10 Section 2 Summary . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+16
+
+Configuration-Specific Dynamic Architecture Discovery . . . . . . . . . . .
+
+16
+
+1.3.1
+
+One Configuration at a Time
+
+16
+
+1.3.2
+
+Operational Protocol for a New Configuration
+
+. . . . . . . . . . . . . . . . . . . . . . .
+
+1
+
+. . . . . . . . . . . . . . . . . . . . .
+. . . . . . . . . . . .
+
+17
+
+1.3.3
+
+Three Deployment Policies Compared . . . . . . . . . . . . . . . . .
+
+17
+
+1.3.4
+
+State Variables During a Run
+
+17
+
+1.3.5
+
+What This Method Deliberately Does Not Do
+
+1.3.6
+
+Common Implementation Pitfalls
+
+. . . . . . . . . . . . . . . . . . . . .
+. . . . . . . . . . . .
+
+18
+
+. . . . . . . . . . . . . . . . . . .
+
+18
+
+1.3.7
+
+Discussion . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+18
+
+1.3.8
+
+Chapter Summary
+
+19
+
+. . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+A Notation and Quick Reference
+
+20
+
+A.1
+
+Reproducibility Checklist . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+20
+
+A.2
+
+FormulaReason Index . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+21
+
+2
+
+List of Figures
+1.1
+
+Chromosome encoding of one candidate DNN classifier. . . . . . . . . . . .
+
+6
+
+1.2
+
+Deterministic decoding of a chromosome into an MLP classifier.
+
+. . . . . .
+
+8
+
+1.3
+
+Workflow of the adopted GA architecture optimizer. . . . . . . . . . . . . .
+
+9
+
+1.4
+
+Six procedural steps of the GA search (encoding already fixed in Section 1). 10
+
+1.5
+
+Initialization flow with parameter-budget repair. . . . . . . . . . . . . . . .
+
+10
+
+1.6
+
+Fitness evaluation pipeline for one individual.
+
+11
+
+1.7
+
+Illustrative GA convergence: best and mean validation macro-F1 versus
+
+. . . . . . . . . . . . . . . .
+
+generation. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+12
+
+1.8
+
+Tournament selection diagram.
+
+12
+
+1.9
+
+Single-point crossover producing a child from two parents.
+
+. . . . . . . . . . . . . . . . . . . . . . . .
+. . . . . . . . .
+
+13
+
+1.10 Configuration-specific architecture discovery with the same GA operators. .
+
+16
+
+1.11 End-to-end path from fused features to a deployed configuration-specific
+architecture. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+3
+
+18
+
+List of Tables
+1.1
+
+Architecture search space and reasons for the allowed values. . . . . . . . .
+
+7
+
+1.2
+
+Classical GA stages mapped to this section's procedure. . . . . . . . . . . .
+
+9
+
+1.3
+
+Atomic mutation types.
+
+. . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+14
+
+1.4
+
+GA hyperparameters and reasons. . . . . . . . . . . . . . . . . . . . . . . .
+
+15
+
+A.1
+
+Notation.
+
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+20
+
+A.2
+
+Core formulas and why they were chosen. . . . . . . . . . . . . . . . . . . .
+
+21
+
+4
+
+Chapter 1
+GA-Based DNN Classifier Architecture
+Optimization
+This standalone chapter presents the genetic algorithm (GA) method used to
+discover deep neural network (DNN) classifier architectures for multi-sensor
+vibration diagnosis. The classifier input is the fused feature vector Zf usion ∈
+R448 . The chapter is organized in three sections: (1) how candidate architec-
+
+tures are represented and what search space is used; (2) how the GA searches
+that space with selection, crossover, mutation, and elitism; (3) how the same
+procedure is applied one machine/sensor configuration at a time to obtain C∗ .
+Every formula is accompanied by the reason it was chosen. This document
+does not modify the main doctoral thesis files.
+
+1.1
+
+DNN Architecture Representation and Search Space
+
+1.1.1 Motivation: Why Architecture Must Be Searched
+Manual design of DNN classifiers for fault diagnosis is brittle. A network that works for
+one sensor layout may fail for another because the decision boundary induced by Zf usion
+changes with the sensing configuration. Exhaustive trial of depths, widths, activations,
+and dropout rates is combinatorial: even a modest discrete grid already contains enormous
+numbers of candidates when variable depth is allowed, and each candidate requires a full
+
+5
+
+training run.
+
+Section 1.1 therefore defines
+
+what is searched: a readable chromosome,
+
+a discrete search space, and hard feasibility constraints.
+searched; Section 1.3 defines
+
+Section 1.2 defines
+
+how it is
+
+how the result is used per configuration.
+
+1.1.2 Chromosome Encoding
+A candidate multilayer perceptron is encoded as
+
+C = [L, N1 , . . . , NL , A1 , . . . , AL , D1 , . . . , DL ]
+
+(1.1)
+
+where L is the number of hidden layers, Ni the width of layer i, Ai its activation, and
+
+Di its dropout rate. The input width is fixed at 448 (Zf usion ) and the output width at
+K = 8 (machine conditions). Those ends are not evolved.
+
+Chromosome C encoding one MLP classifier
+L
+
+N1
+
+N2
+
+N3
+
+A1
+
+A2
+
+D1
+
+D2
+
+depth
+
+neurons
+
+neurons
+
+neurons
+
+act.
+
+act.
+
+drop
+
+drop
+
+decode
+→ DNN: 448 → hidden stack → 8 classes
+
+Figure 1.1: Chromosome encoding of one candidate DNN classifier.
+
+Why this encoding?
+
+Every gene is something a vibration engineer already under-
+
+stands: how deep, how wide, which nonlinearity, how much regularization. When the GA
+
+∗
+returns C , one can write down the winning MLP without specialized NAS tooling.
+
+1.1.3 Search Space Definition
+L ∈ {1, 2, 3, 4, 5},
+Ni ∈ {32, 64, 128, 256, 512},
+(1.2)
+
+Ai ∈ {ReLU, Tanh, LeakyReLU},
+Di ∈ {0, 0.1, 0.2, 0.3, 0.5}.
+
+6
+
+Table 1.1: Architecture search space and reasons for the allowed values.
+
+Gene
+
+Allowed values
+
+Why
+
+L
+
+{1, . . . , 5}
+
+Compact
+
+MLPs;
+
+industrial
+
+la-
+
+tency
+
+Ni
+
+{32, 64, 128, 256, 512}
+
+GPU-friendly widths; enough capacity for 448-D features
+
+Ai
+
+Di
+
+ReLU,
+
+Tanh,
+
+Standard activations that train
+
+LeakyReLU
+
+stably with Adam
+
+{0, 0.1, 0.2, 0.3, 0.5}
+
+From no dropout to strong regularization
+
+Input / out-
+
+448 / 8
+
+Fixed by
+
+put
+
+Zf usion and 8 machine
+
+conditions
+
+Why these discrete sets?
+
+They cover the practical range of compact MLPs on 448-D
+
+fused features without admitting pathologically wide nets.
+
+1.1.4 Cardinality: Why Exhaustion Is Impossible
+For fixed L, each layer has 5 × 3 × 5 = 75 combinations, so
+
+|S| =
+
+5
+X
+
+75L ≈ 2.4 × 109 .
+
+(1.3)
+
+L=1
+
+Why quote this formula?
+
+It justifies population-based stochastic search. Enumera-
+
+tion is impossible; a GA is not an over-engineered replacement for try three networks by
+hand.
+
+1.1.5 Parameter-Count Constraint and Repair
+With w0 = 448, wL+1 = 8, wi = Ni ,
+
+P (C) =
+
+L
+X
+
+wi+1 (wi + 1) ≤ 2 × 106 .
+
+i=0
+
+7
+
+(1.4)
+
+Why a hard parameter cap?
+
+Fitness evaluation trains each candidate fully.
+
+Un-
+
+bounded widths would dominate GPU budget and bias the search toward huge overfit
+models.
+
+Worked example.
+
+For L = 3, (N1 , N2 , N3 ) = (256, 128, 64),
+
+P = 256 · 449 + 128 · 257 + 64 · 129 + 8 · 65 = 156616,
+6
+well under the budget. A five-layer stack of width 512 often exceeds 2×10 and is repaired.
+
+Repair rule.
+
+6
+While P (C) > 2 × 10 , reduce the largest Ni to the next-smaller allowed
+
+width; if already minimal and L > 1, delete a layer; else resample. Repair is preferred to
+pure rejection because it preserves crossover events.
+
+1.1.6 Decoding a Chromosome into an MLP
+Decoding is deterministic: read L; stack L dense layers with stored (Ni , Ai , Di ); append
+a softmax output of size 8.
+
+Input
+448
+
+Dense N1
+
+Dense N2
+
++ A1
+
++ A2
+
++
+
+drop D1
+
++
+
+drop D2
+
+···
+
+Dense 8
+softmax
+
+Figure 1.2: Deterministic decoding of a chromosome into an MLP classifier.
+
+Why deterministic decoding?
+
+Randomness belongs in GA operators and weight ini-
+
+tialization during fitness training, not in the mapping from genotype to architecture.
+Reproducibility requires a one-to-one decode.
+
+1.1.7 Section 1 Summary
+Section 1.1 fixed the searchable object: chromosome (1.1), space (1.2), cardinality (1.3),
+and budget (1.4). The next section searches that object with a genetic algorithm.
+
+8
+
+1.2
+
+GA-Based Architecture Optimization Procedure
+
+1.2.1 Why a Genetic Algorithm
+A GA maintains a population of candidates, evaluates fitness, selects parents, creates
+children by crossover/mutation, and iterates over generations.
+ferentiable objective.
+
+That property is essential:
+
+It does
+
+not need a dif-
+
+fitness is validation macro-F1 after
+
+traininga black-box scalar.
+
+Table 1.2: Classical GA stages mapped to this section's procedure.
+
+Classical stage
+
+This chapter
+
+Formula / rule
+
+Encoding
+
+Section 1.1
+
+Chromosome (1.1)
+
+Initialization
+
+Step A below
+
+Population (1.5)
+
+Evaluation
+
+Step B
+
+Fitness (1.6)
+
+Selection
+
+Step C
+
+Tournament t = 3
+
+Variation
+
+Step D
+
+Crossover (1.11), mutation
+
+Replacement
+
+Step E
+
+Elitism E = 2
+
+Termination
+
+Step F
+
+Gmax / stagnation; best (1.12)
+
+GA architecture optimization workflow used in this chapter
+1. Encode
+search space
+
+2. Init
+population
+
+3. Evaluate
+macro-F1
+
+repeat generations
+
+6. Elitism
++ replace
+
+5. Crossover
++ mutate
+
+4. Select
+parents
+
+7. Terminate
+return C*
+
+Figure 1.3: Workflow of the adopted GA architecture optimizer.
+
+9
+
+A. Init
+population
+
+B. Fitness
+macro-F1
+
+C. Tournament
+selection
+
+F. Terminate
+return C∗
+
+E. Elitism
+& replace
+
+D. Crossover
+& mutation
+
+Figure 1.4: Six procedural steps of the GA search (encoding already fixed in Section 1).
+
+Why GA rather than grid search or continuous NAS?
+
+Grid search scales expo-
+
+nentially in discrete genes. Continuous NAS relaxations do not match inherently categorical choices (depth, activation type, dropout).
+
+A classical chromosome matches the
+
+decision variables directly.
+
+1.2.2 Step A  Initialize the Population
+Draw N = 30 chromosomes by uniform sampling from Equation (1.2), then repair:
+
+P0 = {C1 , . . . , C30 }.
+
+Why N = 30?
+
+(1.5)
+
+Balances diversity against evaluation cost (each individual needs a
+
+training run).
+
+Why uniform random init?
+
+Maximizes initial coverage.
+
+Hand-seeded anchors can
+
+speed progress but bias comparisons; the baseline uses pure random init. After init, log
+histograms of L and widths; redraw if the draw is pathological (e.g., all L = 1).
+
+Sample genes
+uniformly
+
+Assemble
+
+Compute
+
+C
+
+P (C)
+
+OK if
+M
+
+≤2
+
+Repair /
+resample
+Figure 1.5: Initialization flow with parameter-budget repair.
+
+10
+
+1.2.3 Step B  Fitness Evaluation (Macro-F1)
+Decode Ci , train on the training split, and set
+
+K
+
+1 X 2 Preck Reck
+Fitness(Ci ) = Macro-F1(Ci ) =
+K k=1 Preck + Reck
+
+(1.6)
+
+on the validation set. Failed trainings score 0.
+
+Why macro-F1 instead of accuracy?
+
+Accuracy can be dominated by the healthy
+
+class. Macro-F1 weights every machine condition equallyappropriate for safety-critical
+diagnosis.
+
+Why validation, not test?
+
+Test data stay untouched until C
+
+∗
+
+is frozen.
+
+For class k ,
+
+Preck =
+
+T Pk
+,
+T Pk + F P k + ε
+
+Reck =
+
+Why not use cross-entropy as fitness?
+
+T Pk
+.
+T Pk + F N k + ε
+
+(1.7)
+
+Cross-entropy trains weights inside a fixed
+
+net; it is not the operational class-balanced metric reported to engineers. Macro-F1 aligns
+search with the claimed performance measure.
+
+Fixed training recipe (not evolved).
+
+Adam, learning rate 10
+
+−3
+
+, batch size 64, max
+
+50 epochs, early stopping patience 7, weight seed derived from a hash of Ci . Learning-rate
+genes are deliberately excluded so fitness isolates architecture.
+
+Chromosome
+
+Decode
+
+Train on
+
+Ci
+
+MLP
+
+Zf usion
+
+Macro-F1
+
+Validate
+
+fitness Fi
+
+confusion matrix
+
+Figure 1.6: Fitness evaluation pipeline for one individual.
+
+11
+
+Validation macro-F1
+
+Illustrative GA convergence for architecture search
+0.95
+0.90
+0.85
+0.80
+0.75
+0.70
+0.65
+0.60
+0.55
+
+Best macro-F1
+Population mean macro-F1
+
+0
+
+10
+
+20
+
+Generation
+
+30
+
+40
+
+50
+
+Figure 1.7: Illustrative GA convergence: best and mean validation macro-F1 versus generation.
+
+1.2.4 Step C  Tournament Selection
+Tournament size t = 3: sample three individuals without replacement; return the highest
+fitness. Two tournaments yield two parents.
+
+Why t = 3?
+
+Moderate selection pressure: the global best often wins, but weaker parents
+
+still breed, preserving depth diversity.
+The probability that the unique best enters a given tournament is
+
+t
+3
+=
+= 0.1.
+N
+30
+
+Why not roulette-wheel selection?
+
+(1.8)
+
+Roulette needs fitness scaling when scores cluster
+
+near 0.9. Tournament needs none.
+
+0.71
+
+0.84
+
+0.66
+
+0.79
+
+one tournament of size 3 (example)
+
+···
+
+winner
+0.84
+
+Figure 1.8: Tournament selection diagram.
+
+12
+
+1.2.5 Step D  Crossover and Mutation
+With probability pc = 0.8, build a child from parents C
+
+(p)
+
+and C
+
+(q)
+
+:
+
+L(c) ← L(p) or L(q) with probability 12 ,
+
+(1.9)
+
+r ∼ Uniform{1, . . . , L(c) },
+
+
+layer(C(p) , π(i; L(p) )) i < r,
+(c)
+layer(C , i) ←
+
+layer(C(q) , π(i; L(q) )) i ≥ r,
+
+(1.10)
+
+(1.11)
+
+where layer(C, i) = (Ni , Ai , Di ) and π(i; L) = ((i − 1) mod L) + 1.
+
+Why single-point crossover?
+
+Preserves contiguous layer blocks that already work
+
+together.
+
+Why wrap indexing?
+
+Chromosomes have variable length; wrapping lets a shallow
+
+parent still donate genes to a deeper child.
+
+Single-point crossover: child inherits a prefix from one parent and a suffix from the other
+Parent C(p)
+
+Parent C(q)
+
+Child C(c)
+cut
+
+3
+
+256
+
+128
+
+64
+
+R
+
+2
+
+512
+
+128
+
+L
+
+0.3
+
+3
+
+256
+
+128
+
+L
+
+0.3
+
+Figure 1.9: Single-point crossover producing a child from two parents.
+
+Why pc = 0.8?
+
+Strong recombination; the remaining 0.2 copies a parent unchanged so
+
+good genotypes are not always disrupted.
+
+Mutation.
+
+With probability pm
+
+= 0.15, change exactly one gene to a dierent legal
+
+value; repair afterward.
+
+13
+
+Table 1.3: Atomic mutation types.
+
+Mutation
+
+Eect / reason
+
+Increase L
+
+Insert a hidden layer (explore deeper boundaries)
+
+Decrease L
+
+Remove last layer (explore shallower models)
+
+Change Ni
+
+Widen/narrow capacity locally
+
+Change Ai
+
+Swap nonlinearity
+
+Change Di
+
+Adjust regularization
+
+Why one-gene mutation at rate 0.15?
+
+Local edits protect strong architectures while
+
+still enabling escape from local optima.
+
+1.2.6 Step E  Elitism and Replacement
+Copy the top E = 2 individuals unchanged into the next generation; fill remaining slots
+with children.
+
+Why elitism of 2?
+
+The best validation macro-F1 must not be lost to unlucky mutation
+
+or noisy training.
+
+1.2.7 Step F  Termination and Best Architecture
+Stop at Gmax = 50 generations or when best fitness improves by less than ε = 0.001 for
+five consecutive generations. Return
+
+C∗ = arg max Fitness(Ci ).
+Ci ∈P
+
+Why these stopping rules?
+
+(1.12)
+
+A hard cap bounds compute; stagnation saves budget
+
+when the population plateaus.
+
+14
+
+Table 1.4: GA hyperparameters and reasons.
+
+Parameter
+
+Value
+
+Why
+
+Population N
+
+30
+
+Diversity vs. training cost
+
+Generations Gmax
+
+50
+
+Enough to reach plateau on this space
+
+Crossover pc
+
+0.8
+
+Strong recombination of layer blocks
+
+Mutation pm
+
+0.15
+
+Local exploration without destroying
+elites
+
+Tournament t
+
+3
+
+Moderate selection pressure
+
+Elitism E
+
+2
+
+Preserve best architectures
+
+Fitness
+
+Macro-F1
+
+Class-balanced diagnostic goal
+
+Param. budget
+
+2 × 106
+
+Tractable evaluations
+
+Stagnation
+
+5
+
+gens
+
+/
+
+Early stop when progress stalls
+
+0.001
+
+1.2.8 Worked Numerical Crossover Trace
+Parents:
+
+C(p) = [3, 256, 128, 64, ReLU, ReLU, Tanh, 0.1, 0.2, 0],
+C(q) = [2, 512, 128, ReLU, LeakyReLU, 0.3, 0.1].
+If L
+
+(c)
+
+= 3 and cut r = 2, one legal child is
+C(c) = [3, 256, 128, 512, ReLU, LeakyReLU, ReLU, 0.1, 0.1, 0.3],
+
+subject to repair if P (C
+
+(c)
+
+) exceeds the budget. Variable-length crossover is the step most
+
+often under-specified; this trace is normative.
+
+1.2.9 Main GA Loop
+1. Sample and repair P0 .
+
+2. While g
+
+< Gmax and not stagnated: evaluate fitness; keep elites; fill children by
+
+tournament → crossover → mutation → repair; update stagnation.
+
+15
+
+∗
+3. Return C .
+Complexity is dominated by
+
+O(N · G · T ),
+
+(1.13)
+
+where T is the cost of one candidate training. The GA is an oine design-time tool.
+
+1.2.10 Section 2 Summary
+∗
+Section 1.2 specified the full search procedure from population initialization to C , with
+explicit reasons for every operator and hyperparameter.
+
+The next section applies that
+
+procedure configuration by configuration.
+
+1.3
+
+Configuration-Specific Dynamic Architecture Discovery
+
+1.3.1 One Configuration at a Time
+The contribution of this chapter is not only the GA operators, but their
+
+configuration-
+
+specific use. The same Section 1.2 procedure is re-run for each machine/sensor setup:
+GA
+
+XA −−→ C∗A ,
+
+Config A
+GA -> CA*
+
+GA
+
+XB −−→ C∗B ,
+
+GA
+
+XC −−→ C∗C .
+
+Config B
+GA -> CB*
+
+(1.14)
+
+Config C
+GA -> CC*
+
+Same GA operators and hyperparameters; different data ⇒ possibly different architectures
+
+One-configuration-at-a-time optimization
+
+Figure 1.10: Configuration-specific architecture discovery with the same GA operators.
+
+The scientific claim is that optimal architectures need not coincide:
+
+∃ XA , XB :
+
+C∗A ̸= C∗B
+
+and
+
+Macro-F1(C∗A ; XA ) > Macro-F1(C∗B ; XA ).
+16
+
+(1.15)
+
+Why re-search rather than one universal net?
+
+Sensing layouts change the distri-
+
+∗
+bution of Zf usion . Transferring CA to configuration B without re-search is a valid baseline,
+but this method treats architecture as configuration-dependent and provides a repeatable
+way to obtain it.
+
+1.3.2 Operational Protocol for a New Configuration
+1. Collect multi-sensor data for the new configuration.
+
+2. Build Zf usion features and labels; split train/validation/test.
+
+3. Run the GA of Section 1.2 with Table 1.4.
+
+4. Deploy the decoded MLP of C
+
+∗
+
+as the online classifier.
+
+1.3.3 Three Deployment Policies Compared
+1.
+
+Universal fixed DNN: one hand-designed architecture for all configurations.
+
+2.
+
+Transfer: run GA on A, reuse C∗A on B without re-search.
+
+3.
+
+Re-search (this chapter): run GA independently on each configuration.
+
+Why present all three?
+
+Policy 3 is the methodological recommendation. Policies 12
+
+are necessary experimental baselines: if transfer already matches re-search, the plant can
+skip compute. The chapter does not assume re-search always wins by a large margin; it
+provides claim (1.15) and the protocol to test it.
+
+1.3.4 State Variables During a Run
+Maintain: population Pg ; fitness {Fi }; elite set of size E ; historical best Fbest ; stagnation
+counter; optional archive of evaluated chromosomes. Given the same splits, seeds, and
+hyperparameters, two implementations should produce statistically consistent C
+butions.
+
+17
+
+∗
+
+distri-
+
+Figure 1.11:
+
+Zf usion
+
+GA
+
+features
+
+Section 2
+
+C∗
+
+Deployed
+MLP classifier
+
+End-to-end path from fused features to a deployed configuration-specific
+
+architecture.
+
+1.3.5 What This Method Deliberately Does Not Do
+ Evolve learning rates or batch sizes (would confound architecture eects).
+ Return a Pareto front of accuracy vs. size (hard cap + single macro-F1 objective).
+ Use one-shot weight-sharing NAS (prefers full training per candidate).
+ Co-evolve weights with topology (backprop trains weights for each decoded MLP).
+
+1.3.6 Common Implementation Pitfalls
+ Using test macro-F1 inside the GA (contaminates selection).
+ Forgetting wrap indexing in crossover (illegal children when depths dier).
+ Evolving learning rate with architecture (confounds structure claims).
+ Random splits of temporally adjacent samples (inflated fitness).
+ No elitism (best architectures disappear under noise).
+
+1.3.7 Discussion
+The fitness landscape over S is rugged: one width or dropout change can move macro-F1
+by several points. Tournament selection, layer-block crossover, one-gene mutation, and
+elitism are chosen together so the search can climb local hills without abandoning an entire
+depth niche too early. Section 1.1 defined what is searchable; Section 1.2 defined how to
+search; Section 1.3 defined how to deploy the search per configuration. That three-way
+split is the structure of the method.
+
+18
+
+1.3.8 Chapter Summary
+This standalone chapter presented GA-based DNN classifier architecture optimization in
+three sections. Section 1.1 encoded MLP classifiers as chromosomes with an explicit search
+space and parameter budget.
+
+Section 1.2 detailed population initialization, macro-F1
+
+fitness, tournament selection, wrap-aware crossover, mutation, elitism, and termination.
+
+∗
+Section 1.3 specified configuration-specific discovery of C , compared transfer and fixed
+baselines, and listed reproducibility requirements. The GA remains an oine design tool;
+online inference uses only the final decoded network.
+
+19
+
+Appendix A
+Notation and Quick Reference
+Table A.1: Notation.
+
+A.1
+
+Symbol
+
+Meaning
+
+Zf usion
+
+Fused feature vector (dim. 448)
+
+C, C∗
+
+Chromosome; best chromosome
+
+S , |S|
+
+Search space; cardinality
+
+P (C)
+
+Trainable parameter count
+
+N , Gmax
+
+Population size; max generations
+
+pc , pm , t, E
+
+Crossover; mutation; tournament; elitism
+
+Reproducibility Checklist
+
+1. Genes and allowed sets match Equation (1.2).
+
+6
+2. Parameter count uses Equation (1.4) with budget 2 × 10 .
+
+3. Hyperparameters match Table 1.4.
+
+4. Crossover uses wrap-aware map (1.11).
+
+5. Fitness is validation macro-F1; failures score 0.
+
+6. New configurations trigger a fresh GA run unless studying transfer baselines.
+
+20
+
+A.2
+
+FormulaReason Index
+Table A.2: Core formulas and why they were chosen.
+
+Formula
+
+Why chosen
+
+Chromosome (1.1)
+
+Readable MLP genes engineers can audit
+
+Space (1.2)
+
+Practical discrete ranges for 448-D features
+
+Cardinality (1.3)
+
+Shows enumeration is impossible
+
+Params (1.4)
+
+Hard compute/overfit guardrail
+
+Fitness (1.6)
+
+Class-balanced diagnostic objective
+
+Crossover (1.11)
+
+Inherit layer blocks; handle depth mismatch
+
+Best (1.12)
+
+Deploy a single concrete architecture
+
+Claim (1.15)
+
+Config-specific optimality is testable
+
+Complexity (1.13)
+
+Marks GA as oine design cost
+
+21
+
